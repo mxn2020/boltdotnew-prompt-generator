@@ -56,7 +56,12 @@ export function PromptEditor() {
                   <span className="font-medium">{currentPrompt.prompt_type?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())} Asset</span> • {currentPrompt.structure_type} structure
                 </>
               ) : (
-                <>{currentPrompt.structure_type} structure • {currentPrompt.complexity} complexity</>
+                <>
+                  {currentPrompt.structure_type} structure
+                  {currentPrompt.id && currentPrompt.complexity !== 'custom' && (
+                    <> • {currentPrompt.complexity} complexity</>
+                  )}
+                </>
               )}
             </p>
           </div>

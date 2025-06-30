@@ -76,7 +76,7 @@ export function useUserPreferences() {
         collaboration_invites: true,
         default_prompt_privacy: false,
         default_structure_type: 'standard',
-        default_complexity: 'simple',
+        default_complexity: 'custom',
         auto_save_interval: 30,
         show_onboarding: true,
       };

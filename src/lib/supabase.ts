@@ -51,7 +51,7 @@ export type Database = {
           category: string;
           type: string;
           language: string;
-          complexity: 'simple' | 'medium' | 'complex';
+          complexity: 'simple' | 'medium' | 'complex' | 'custom';
           is_public: boolean;
           version_major: number;
           version_minor: number;
@@ -69,7 +69,7 @@ export type Database = {
           category: string;
           type: string;
           language: string;
-          complexity: 'simple' | 'medium' | 'complex';
+          complexity: 'simple' | 'medium' | 'complex' | 'custom';
           is_public?: boolean;
           version_major?: number;
           version_minor?: number;

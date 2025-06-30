@@ -495,23 +495,32 @@ export function PromptEditor() {
                  )}
                </div>
 
-               {/* Complexity */}
-               <div className="space-y-2">
-                 <Label>Complexity</Label>
-                 <Select 
-                   value={currentPrompt?.complexity || 'simple'}
-                   onValueChange={(value) => updatePromptField('complexity', value as Complexity)}
-                 >
-                   <SelectTrigger>
-                     <SelectValue />
-                   </SelectTrigger>
-                   <SelectContent>
-                     <SelectItem value="simple">Simple</SelectItem>
-                     <SelectItem value="medium">Medium</SelectItem>
-                     <SelectItem value="complex">Complex</SelectItem>
-                   </SelectContent>
-                 </Select>
-               </div>
+               {/* Complexity - Only show for existing prompts, disabled for AI-generated ones */}
+               {currentPrompt?.id && (
+                 <div className="space-y-2">
+                   <Label>Complexity</Label>
+                   <Select 
+                     value={currentPrompt?.complexity || 'custom'}
+                     onValueChange={(value) => updatePromptField('complexity', value as Complexity)}
+                     disabled={currentPrompt?.complexity !== 'custom'}
+                   >
+                     <SelectTrigger>
+                       <SelectValue />
+                     </SelectTrigger>
+                     <SelectContent>
+                       <SelectItem value="simple">Simple (AI-generated)</SelectItem>
+                       <SelectItem value="medium">Medium (AI-generated)</SelectItem>
+                       <SelectItem value="complex">Complex (AI-generated)</SelectItem>
+                       <SelectItem value="custom">Custom (User-created)</SelectItem>
+                     </SelectContent>
+                   </Select>
+                   {currentPrompt?.complexity !== 'custom' && (
+                     <p className="text-xs text-muted-foreground">
+                       AI-generated complexity cannot be modified
+                     </p>
+                   )}
+                 </div>
+               )}
 
                {/* Category */}
                <div className="space-y-2">

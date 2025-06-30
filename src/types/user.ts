@@ -22,7 +22,7 @@ export interface UserPreferences {
   collaboration_invites: boolean;
   default_prompt_privacy: boolean;
   default_structure_type: 'standard' | 'structured' | 'modulized' | 'advanced';
-  default_complexity: 'simple' | 'medium' | 'complex';
+  default_complexity: 'simple' | 'medium' | 'complex' | 'custom';
   auto_save_interval: number;
   show_onboarding: boolean;
 }

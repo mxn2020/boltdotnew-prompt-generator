@@ -3,7 +3,7 @@ import type { AIProvider } from './providers';
 export interface AIConfig {
   provider: AIProvider;
   model: string;
-  defaultComplexity: 'simple' | 'medium' | 'complex';
+  defaultComplexity: 'simple' | 'medium' | 'complex' | 'custom';
   maxTokens: number;
 }
 

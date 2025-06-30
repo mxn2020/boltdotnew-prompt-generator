@@ -54,6 +54,7 @@ export function PromptConfigPanel({ config, onChange }: PromptConfigPanelProps) 
             <option value="simple">Simple</option>
             <option value="medium">Medium</option>
             <option value="complex">Complex</option>
+            <option value="custom">Custom</option>
           </select>
         </div>
 
