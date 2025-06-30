@@ -28,7 +28,7 @@ export interface Prompt {
 
 export type PromptType = 'prompt' | 'context' | 'response_schema' | 'response_examples' | 'persona' | 'instructions' | 'constraints' | 'examples';
 export type StructureType = 'standard' | 'structured' | 'modulized' | 'advanced';
-export type Complexity = 'simple' | 'medium' | 'complex';
+export type Complexity = 'simple' | 'medium' | 'complex' | 'custom';
 
 export interface PromptContent {
   segments?: PromptSegment[];
