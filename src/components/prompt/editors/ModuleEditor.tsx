@@ -185,7 +185,7 @@ function ModuleItem({ module, onUpdate, onRemove }: ModuleItemProps) {
                 <SelectValue placeholder="No wrapper" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">No wrapper</SelectItem>
+                <SelectItem value="no_wrapper">No wrapper</SelectItem>
                 <SelectItem value="format-json">Format as JSON</SelectItem>
                 <SelectItem value="format-list">Format as List</SelectItem>
                 <SelectItem value="validate-input">Validate Input</SelectItem>

@@ -252,23 +252,33 @@ export function useAddToCollection() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ 
-      collectionId, 
-      itemType, 
-      promptId, 
-      childCollectionId 
-    }: { 
+    mutationFn: async (params: { 
       collectionId: string; 
       itemType: 'prompt' | 'collection';
       promptId?: string;
       childCollectionId?: string;
     }) => {
-      const { data, error } = await supabase.rpc('add_to_collection_enhanced', {
-        collection_uuid: collectionId,
-        item_type_param: itemType,
-        prompt_uuid: promptId,
-        child_collection_uuid: childCollectionId,
-      });
+      let data, error;
+      
+      if (params.itemType === 'prompt' && params.promptId) {
+        // Use the new dedicated function for adding prompts
+        const result = await supabase.rpc('add_prompt_to_collection', {
+          collection_uuid: params.collectionId,
+          prompt_uuid: params.promptId,
+        });
+        data = result.data;
+        error = result.error;
+      } else {
+        // Use the general function for other item types
+        const result = await supabase.rpc('add_to_collection_enhanced', {
+          collection_uuid: params.collectionId,
+          item_type_param: params.itemType,
+          prompt_uuid: params.promptId,
+          child_collection_uuid: params.childCollectionId,
+        });
+        data = result.data;
+        error = result.error;
+      }
 
       if (error) throw error;
       return data;
@@ -276,6 +286,10 @@ export function useAddToCollection() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['collection', variables.collectionId] });
       queryClient.invalidateQueries({ queryKey: ['collections'] });
+      // Also invalidate prompt collections query if we have a promptId
+      if (variables.promptId) {
+        queryClient.invalidateQueries({ queryKey: ['prompt-collections', variables.promptId] });
+      }
     },
   });
 }
@@ -301,6 +315,26 @@ export function useRemoveFromCollection() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['collection', variables.collectionId] });
       queryClient.invalidateQueries({ queryKey: ['collections'] });
+      // Also invalidate any related prompt collections queries
+      queryClient.invalidateQueries({ queryKey: ['prompt-collections'] });
     },
+  });
+}
+
+// New hook to get collections containing a specific prompt
+export function usePromptCollections(promptId: string) {
+  return useQuery({
+    queryKey: ['prompt-collections', promptId],
+    queryFn: async () => {
+      if (!promptId) return [];
+      
+      const { data, error } = await supabase.rpc('get_prompt_collections', {
+        prompt_uuid: promptId
+      });
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!promptId,
   });
 }

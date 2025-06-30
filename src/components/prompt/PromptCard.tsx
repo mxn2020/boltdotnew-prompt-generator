@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import { 
   Eye, 
   Heart, 
-  GitFork, 
+  GitFork,
+  FolderOpen,
   Calendar, 
   User, 
   Lock, 
@@ -16,6 +17,7 @@ import {
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { formatDate, truncateText } from '../../lib/format-utils';
 import { cn } from '../../lib/utils';
+import { PromptCollectionsPanel } from './PromptCollectionsPanel';
 import type { Prompt } from '../../types/prompt';
 
 interface PromptCardProps {
@@ -203,6 +205,15 @@ export function PromptCard({
             <Calendar className="w-3 h-3" />
             <span className="text-xs">{formatDate(prompt.updated_at)}</span>
           </div>
+        </div>
+
+        {/* Collections Button */}
+        <div className="mt-2 pt-2 border-t border-gray-100 flex justify-end">
+          <PromptCollectionsPanel 
+            promptId={prompt.id}
+            isOpen={false}
+            onToggle={() => {}}
+          />
         </div>
 
         <div className="flex items-center space-x-3">
