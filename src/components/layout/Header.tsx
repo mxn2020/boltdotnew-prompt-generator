@@ -89,10 +89,12 @@ export function Header() {
             </div>
           )}
 
-          {/* Theme Toggle - Desktop */}
-          <div className="hidden md:block">
-            <SimpleThemeToggle />
-          </div>
+          {/* Theme Toggle - Desktop (only for authenticated users) */}
+          {user && (
+            <div className="hidden md:block">
+              <SimpleThemeToggle />
+            </div>
+          )}
 
           {user ? (
             <>

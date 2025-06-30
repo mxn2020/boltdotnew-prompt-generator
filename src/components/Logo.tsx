@@ -1,4 +1,3 @@
-import React from 'react';
 import { cn } from '@/lib/utils';
 import { useTheme } from '../hooks/useTheme';
 
@@ -17,7 +16,10 @@ export function Logo({ size = 'md', className }: LogoProps) {
     xl: 'w-16 h-16'
   };
   
-  const logoSrc = resolvedTheme === 'dark' 
+  // Ensure we have a valid theme value
+  const currentTheme = resolvedTheme || 'light';
+  
+  const logoSrc = currentTheme === 'dark' 
     ? '/images/logo-dark.png' 
     : '/images/logo-light.png';
 
