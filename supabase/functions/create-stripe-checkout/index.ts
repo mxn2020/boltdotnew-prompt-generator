@@ -21,21 +21,38 @@ serve(async (req) => {
   }
 
   try {
+    console.log('Processing checkout request...');
+    
     const { priceId, successUrl, cancelUrl, customerId } = await req.json();
+    
+    // Validate required fields
+    if (!priceId || !successUrl || !cancelUrl) {
+      throw new Error('Missing required fields: priceId, successUrl, cancelUrl');
+    }
+
+    console.log('Request data:', { priceId, successUrl, cancelUrl, customerId });
 
     // Get user from JWT token
     const jwt = req.headers.get('Authorization')?.replace('Bearer ', '');
+    if (!jwt) {
+      throw new Error('No authorization token provided');
+    }
+
     const { data: { user }, error: authError } = await supabase.auth.getUser(jwt);
-    
     if (authError || !user) {
+      console.error('Auth error:', authError);
       throw new Error('Unauthorized');
     }
+
+    console.log('User authenticated:', user.id);
 
     // Create or get Stripe customer
     let customer;
     if (customerId) {
+      console.log('Retrieving existing customer:', customerId);
       customer = await stripe.customers.retrieve(customerId);
     } else {
+      console.log('Creating new customer for user:', user.email);
       customer = await stripe.customers.create({
         email: user.email,
         metadata: {
@@ -43,8 +60,10 @@ serve(async (req) => {
         },
       });
 
+      console.log('Created customer:', customer.id);
+
       // Save customer ID to database
-      await supabase
+      const { error: upsertError } = await supabase
         .from('user_subscriptions')
         .upsert({
           user_id: user.id,
@@ -52,8 +71,17 @@ serve(async (req) => {
           plan_type: 'free',
           status: 'active',
           cancel_at_period_end: false,
+        }, {
+          onConflict: 'user_id'
         });
+
+      if (upsertError) {
+        console.error('Database upsert error:', upsertError);
+        throw new Error(`Database error: ${upsertError.message}`);
+      }
     }
+
+    console.log('Creating checkout session...');
 
     // Create checkout session
     const session = await stripe.checkout.sessions.create({
@@ -73,17 +101,23 @@ serve(async (req) => {
       },
     });
 
+    console.log('Checkout session created:', session.id);
+
     return new Response(
       JSON.stringify({ sessionId: session.id }),
-      { 
+      {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
       }
     );
   } catch (error) {
+    console.error('Checkout error:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
-      { 
+      JSON.stringify({ 
+        error: error.message,
+        timestamp: new Date().toISOString()
+      }),
+      {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400,
       }

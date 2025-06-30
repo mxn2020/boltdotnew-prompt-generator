@@ -126,7 +126,7 @@ export function PricingPlans({ selectedPlan, onSelectPlan, showOnboarding = fals
                 <div className="mb-4">
                   <span className="text-4xl font-bold text-gray-900">${price}</span>
                   {price > 0 && (
-                    <span className="text-gray-600">/{billingCycle === 'yearly' ? 'year' : 'month'}</span>
+                    <span className="text-gray-600">/{billingCycle === 'yearly' ? 'month' : 'month'}</span>
                   )}
                 </div>
 
