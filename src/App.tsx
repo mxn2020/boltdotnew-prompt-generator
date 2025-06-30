@@ -83,10 +83,7 @@ function App() {
             } />
             <Route path="/settings" element={
               <ProtectedRoute>
-                <div className="p-8 text-center">
-                  <h1 className="text-2xl font-bold">Settings</h1>
-                  <p className="text-gray-600 mt-2">Coming in Step 6</p>
-                </div>
+                <SettingsPage />
               </ProtectedRoute>
             } />
             <Route path="/profile" element={

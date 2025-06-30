@@ -58,7 +58,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       },
     });
 
+    console.log('SignUp Data:', data);
+    console.log('SignUp Error:', error);
+
     if (data.user && !error) {
+      console.log('User signed up successfully:', data.user);
       // Create profile
       await supabase.from('profiles').insert({
         id: data.user.id,
