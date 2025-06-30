@@ -10,6 +10,7 @@ import {
   ArrowRight,
   CheckCircle
 } from 'lucide-react';
+import { BoltBadge } from '../components/BoltBadge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -52,6 +53,11 @@ export function LandingPage() {
      {/* Hero Section */}
      <div className="relative overflow-hidden">
        <div className="container mx-auto px-4 py-16 sm:py-24">
+         {/* Bolt.new Badge - Top Right */}
+         <div className="absolute top-4 right-4 md:top-8 md:right-8">
+           <BoltBadge size="md" variant="auto" />
+         </div>
+         
          <div className="text-center">
            <div className="flex justify-center mb-6">
              <Badge variant="secondary" className="flex items-center gap-2 px-4 py-2">

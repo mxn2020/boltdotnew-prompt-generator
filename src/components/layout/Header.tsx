@@ -13,6 +13,7 @@ import {
   CreditCard,
   Menu
 } from 'lucide-react';
+import { BoltBadge } from '../BoltBadge';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -51,10 +52,12 @@ export function Header() {
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         {/* Logo and Brand */}
         <div className="flex items-center space-x-8">
-          <Link to="/" className="flex items-center space-x-2">
-            <Zap className="h-8 w-8 text-primary" />
-            <span className="text-xl font-bold">PromptCraft</span>
-          </Link>
+          <div className="flex items-center">
+            <Link to="/" className="flex items-center space-x-2">
+              <Zap className="h-8 w-8 text-primary" />
+              <span className="text-xl font-bold">PromptCraft</span>
+            </Link>
+          </div>
 
           {/* Desktop Navigation */}
           {user && (
@@ -73,6 +76,11 @@ export function Header() {
 
         {/* Right side */}
         <div className="flex items-center space-x-4">
+          {/* Bolt Badge */}
+          <div className="hidden md:block">
+            <BoltBadge size="sm" variant="auto" />
+          </div>
+          
           {/* Credits Display */}
           {user && subscriptionInfo?.can_use_ai && (
             <div className="hidden md:block">
