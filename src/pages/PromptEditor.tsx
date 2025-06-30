@@ -1,11 +1,12 @@
 import React from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Layout } from '../components/layout/Layout';
-import { Settings, Save, Download, Plus, AlertCircle, History, GitBranch } from 'lucide-react';
+import { Settings, Save, Download, Plus, AlertCircle, History, GitBranch, FileText } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { ensureUserProfile } from '../lib/profile';
 import { usePromptStore } from '../stores/promptStore';
 import { usePrompt, useCreatePrompt, useUpdatePrompt } from '../hooks/usePrompts';
+import { useCreateAsset } from '../hooks/useAssets';
 import { useVersions, useCreateVersion, useRestoreVersion } from '../hooks/useVersions';
 import { PromptEditor as PromptEditorComponent } from '../components/prompt/PromptEditor';
 import { VersionHistory } from '../components/version/VersionHistory';
@@ -13,12 +14,13 @@ import { DiffViewer } from '../components/version/DiffViewer';
 import { ExportDialog } from '../components/export/ExportDialog';
 import { VersionDiffer } from '../lib/version/differ';
 import type { StructureType, Complexity, Prompt } from '../types/prompt';
-import type { PromptVersion, VersionComparison } from '../types/version';
+import type { PromptVersion, VersionComparison, PromptType } from '../types/version';
 
 export function PromptEditor() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const promptId = searchParams.get('prompt');
+  const isAsset = searchParams.get('asset') === 'true';
   const { user } = useAuth();
   
   const { 
@@ -32,6 +34,7 @@ export function PromptEditor() {
   const { data: existingPrompt } = usePrompt(promptId || '');
   const createPrompt = useCreatePrompt();
   const updatePrompt = useUpdatePrompt();
+  const createAsset = useCreateAsset();
   const createVersion = useCreateVersion();
   const restoreVersion = useRestoreVersion();
   
@@ -40,6 +43,8 @@ export function PromptEditor() {
   const [showVersionHistory, setShowVersionHistory] = React.useState(false);
   const [showExportDialog, setShowExportDialog] = React.useState(false);
   const [versionComparison, setVersionComparison] = React.useState<VersionComparison | null>(null);
+  const [showAssetTypeSelector, setShowAssetTypeSelector] = React.useState(isAsset);
+  const [selectedAssetType, setSelectedAssetType] = React.useState<PromptType>('context');
   const [saveError, setSaveError] = React.useState<string | null>(null);
 
   // Load existing prompt or create new one
@@ -48,13 +53,14 @@ export function PromptEditor() {
       // Only load existing prompt if we don't already have it loaded
       console.log('Loading existing prompt:', existingPrompt);
       setCurrentPrompt(existingPrompt);
-    } else if (!promptId && !currentPrompt) {
+    } else if (!promptId && !currentPrompt && !isAsset) {
       // Create new prompt only if we don't have one
       console.log('Creating new prompt');
       setCurrentPrompt({
         title: 'Untitled Prompt',
         description: '',
         content: {},
+        prompt_type: 'prompt',
         structure_type: 'standard',
         category: 'ai',
         type: 'assistant',
@@ -67,7 +73,7 @@ export function PromptEditor() {
         version_batch: 0,
       });
     }
-  }, [promptId, existingPrompt, setCurrentPrompt]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [promptId, existingPrompt, setCurrentPrompt, isAsset]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSave = async () => {
     if (!currentPrompt) return;
@@ -90,12 +96,13 @@ export function PromptEditor() {
       }
 
       if (currentPrompt.id) {
-        // Update existing prompt
+        // Update existing prompt or asset
         await updatePrompt.mutateAsync({
           id: currentPrompt.id,
           title: currentPrompt.title!,
           description: currentPrompt.description,
           content: currentPrompt.content!,
+          prompt_type: currentPrompt.prompt_type!,
           structure_type: currentPrompt.structure_type!,
           category: currentPrompt.category!,
           type: currentPrompt.type!,
@@ -103,25 +110,47 @@ export function PromptEditor() {
           complexity: currentPrompt.complexity!,
           is_public: currentPrompt.is_public,
           tags: currentPrompt.tags,
+          asset_fields: currentPrompt.asset_fields,
+          asset_metadata: currentPrompt.asset_metadata,
         });
       } else {
-        // Create new prompt
-        const newPrompt = await createPrompt.mutateAsync({
-          title: currentPrompt.title!,
-          description: currentPrompt.description,
-          content: currentPrompt.content!,
-          structure_type: currentPrompt.structure_type!,
-          category: currentPrompt.category!,
-          type: currentPrompt.type!,
-          language: currentPrompt.language!,
-          complexity: currentPrompt.complexity!,
-          is_public: currentPrompt.is_public || false,
-          tags: currentPrompt.tags || [],
-        });
-        
-        // Update URL with new prompt ID
-        navigate(`/editor?prompt=${newPrompt.id}`, { replace: true });
-        setCurrentPrompt(newPrompt);
+        if (currentPrompt.prompt_type === 'prompt') {
+          // Create new prompt
+          const newPrompt = await createPrompt.mutateAsync({
+            title: currentPrompt.title!,
+            description: currentPrompt.description,
+            content: currentPrompt.content!,
+            prompt_type: 'prompt',
+            structure_type: currentPrompt.structure_type!,
+            category: currentPrompt.category!,
+            type: currentPrompt.type!,
+            language: currentPrompt.language!,
+            complexity: currentPrompt.complexity!,
+            is_public: currentPrompt.is_public || false,
+            tags: currentPrompt.tags || [],
+          });
+          
+          // Update URL with new prompt ID
+          navigate(`/editor?prompt=${newPrompt.id}`, { replace: true });
+          setCurrentPrompt(newPrompt);
+        } else {
+          // Create new asset
+          const assetId = await createAsset.mutateAsync({
+            title: currentPrompt.title!,
+            description: currentPrompt.description,
+            asset_type: currentPrompt.prompt_type!,
+            content: currentPrompt.content!,
+            asset_fields: currentPrompt.asset_fields,
+            category: currentPrompt.category!,
+            language: currentPrompt.language!,
+            complexity: currentPrompt.complexity!,
+            tags: currentPrompt.tags || [],
+            is_public: currentPrompt.is_public || false,
+          });
+          
+          // Navigate to asset editor
+          navigate(`/asset-editor/${assetId}`, { replace: true });
+        }
       }
       
       markAsSaved();
@@ -197,11 +226,12 @@ export function PromptEditor() {
     setShowExportDialog(false);
   };
 
-  const handleNewPrompt = () => {
+  const handleNewPrompt = (isAssetPrompt = false) => {
     setCurrentPrompt({
       title: 'Untitled Prompt',
       description: '',
       content: {},
+      prompt_type: 'prompt',
       structure_type: 'standard',
       category: 'ai',
       type: 'assistant',
@@ -213,7 +243,34 @@ export function PromptEditor() {
       version_minor: 0,
       version_batch: 0,
     });
-    navigate('/editor', { replace: true });
+    if (isAssetPrompt) {
+      setShowAssetTypeSelector(true);
+    } else {
+      navigate('/editor', { replace: true });
+    }
+  };
+  
+  const handleCreateAsset = () => {
+    if (!selectedAssetType) return;
+    
+    setCurrentPrompt({
+      title: `Untitled ${selectedAssetType.replace('_', ' ')}`,
+      description: '',
+      content: {},
+      prompt_type: selectedAssetType,
+      structure_type: 'standard',
+      category: 'general',
+      type: 'asset',
+      language: 'english',
+      complexity: 'simple',
+      is_public: false,
+      tags: [],
+      version_major: 1,
+      version_minor: 0,
+      version_batch: 0,
+    });
+    
+    setShowAssetTypeSelector(false);
   };
 
   return (
@@ -253,6 +310,13 @@ export function PromptEditor() {
                 <span>New</span>
               </button>
               <button
+                onClick={() => handleNewPrompt(true)}
+                className="flex items-center space-x-2 px-4 py-2 border border-orange-300 text-orange-700 rounded-lg hover:bg-orange-50 transition-colors"
+              >
+                <FileText className="w-4 h-4" />
+                <span>New Asset</span>
+              </button>
+              <button
                 onClick={() => setShowVersionHistory(!showVersionHistory)}
                 className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
               >
@@ -280,6 +344,64 @@ export function PromptEditor() {
             </div>
           </div>
         </div>
+
+        {/* Asset Type Selector Modal */}
+        {showAssetTypeSelector && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
+              <div className="p-6 border-b border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900">Select Asset Type</h3>
+              </div>
+              
+              <div className="p-6 space-y-4">
+                <p className="text-gray-600">
+                  Choose the type of asset you want to create:
+                </p>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {[
+                    { value: 'context', label: 'Context', description: 'Background information and context' },
+                    { value: 'response_schema', label: 'Response Schema', description: 'Structure for AI responses' },
+                    { value: 'response_examples', label: 'Response Examples', description: 'Example outputs for reference' },
+                    { value: 'persona', label: 'Persona', description: 'Character or role definition' },
+                    { value: 'instructions', label: 'Instructions', description: 'Specific guidance for AI' },
+                    { value: 'constraints', label: 'Constraints', description: 'Limitations and boundaries' },
+                    { value: 'examples', label: 'Examples', description: 'Illustrative examples for AI' },
+                  ].map((type) => (
+                    <button
+                      key={type.value}
+                      onClick={() => setSelectedAssetType(type.value as PromptType)}
+                      className={cn(
+                        'p-4 rounded-lg border text-left transition-all',
+                        selectedAssetType === type.value
+                          ? 'border-orange-500 bg-orange-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      )}
+                    >
+                      <div className="font-medium text-gray-900">{type.label}</div>
+                      <div className="text-sm text-gray-600">{type.description}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              
+              <div className="p-6 border-t border-gray-200 flex items-center justify-end space-x-3">
+                <button
+                  onClick={() => setShowAssetTypeSelector(false)}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleCreateAsset}
+                  className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+                >
+                  Create Asset
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Main Editor Interface */}
         <div className={`grid gap-8 ${showVersionHistory ? 'grid-cols-1 xl:grid-cols-4' : 'grid-cols-1 xl:grid-cols-3'}`}>
