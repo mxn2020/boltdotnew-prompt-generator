@@ -1,4 +1,5 @@
 import { AI_FEATURE_CONFIGS, type AIFeatureConfig } from '../../types/payment';
+import { getAIConfig } from './config';
 import type { AIProvider } from './providers';
 import type { Complexity } from '../../types/prompt';
 
@@ -66,12 +67,14 @@ export class AIFeatureCostCalculator {
 
   static getEstimatedCost(
     featureType: string,
-    provider: AIProvider = 'openai',
+    provider?: AIProvider,
     complexity: Complexity = 'simple',
     promptLength: number = 500
   ): number {
-    const defaultModel = provider === 'openai' ? 'gpt-4-turbo-preview' : 'claude-3-sonnet-20240229';
-    const calculation = this.calculateCost(featureType, provider, defaultModel, complexity, promptLength);
+    const config = getAIConfig();
+    const actualProvider = provider || config.provider;
+    const defaultModel = actualProvider === 'openai' ? config.model : 'claude-3-sonnet-20240229';
+    const calculation = this.calculateCost(featureType, actualProvider, defaultModel, complexity, promptLength);
     return calculation.totalCost;
   }
 

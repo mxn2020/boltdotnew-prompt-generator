@@ -161,9 +161,15 @@ export const AI_FEATURE_CONFIGS: Record<string, AIFeatureConfig> = {
         anthropic: 1.2
       },
       model: {
-        'gpt-4-turbo-preview': 1.5,
-        'gpt-4': 1.3,
-        'gpt-3.5-turbo': 1.0,
+        'gpt-4.1': 10,
+        'gpt-4.1-mini': 2,
+        'gpt-4.1-nano': 0.5,
+        'gpt-4o': 12.5,
+        'gpt-4o-mini': 0.75,
+        'o3-mini': 5.5,
+        'o4-mini': 5.5,
+        'o3': 10,
+        'o3-deep-research': 50,
         'claude-3-opus-20240229': 2.0,
         'claude-3-sonnet-20240229': 1.2,
         'claude-3-haiku-20240307': 0.8

@@ -3,8 +3,8 @@ import { AIPromptGenerator, type GenerationResult, type GenerationError } from '
 import { AIFeatureCostCalculator } from '../lib/ai/costCalculator';
 import { useSubscriptionInfo, useCheckCredits, useDeductCredits } from './usePayment';
 import { useAuth } from '../contexts/AuthContext';
+import { getAIConfig } from '../lib/ai/config';
 import type { GenerationConfig } from '../lib/ai/promptTemplates';
-import type { AIProvider } from '../lib/ai/providers';
 
 const aiGenerator = new AIPromptGenerator();
 
@@ -13,9 +13,10 @@ export function useAIGeneration() {
   const { data: subscriptionInfo } = useSubscriptionInfo();
   const checkCredits = useCheckCredits();
   const deductCredits = useDeductCredits();
+  const aiConfig = getAIConfig();
 
-  return useMutation<GenerationResult, GenerationError, { config: GenerationConfig; provider?: AIProvider }>({
-    mutationFn: async ({ config, provider = 'openai' }) => {
+  return useMutation<GenerationResult, GenerationError, { config: GenerationConfig }>({
+    mutationFn: async ({ config }) => {
       if (!user) {
         throw new Error('User not authenticated');
       }
@@ -25,12 +26,12 @@ export function useAIGeneration() {
         throw new Error('AI features require Pro or Max plan. Please upgrade your subscription.');
       }
 
-      // Calculate cost
+      // Calculate cost using global config
       const promptLength = config.userInput.length;
       const costCalculation = AIFeatureCostCalculator.calculateCost(
         'prompt_generation',
-        provider,
-        provider === 'openai' ? 'gpt-4-turbo-preview' : 'claude-3-sonnet-20240229',
+        aiConfig.provider,
+        aiConfig.model,
         config.complexity,
         promptLength
       );
@@ -47,11 +48,11 @@ export function useAIGeneration() {
 
       let success = false;
       let errorMessage: string | undefined;
-      let result: GenerationResult;
 
       try {
-        result = await aiGenerator.generatePrompt(config, provider);
+        const result = await aiGenerator.generatePrompt(config, aiConfig.provider);
         success = true;
+        return result;
       } catch (error) {
         errorMessage = error instanceof Error ? error.message : 'Generation failed';
         throw error;
@@ -60,8 +61,8 @@ export function useAIGeneration() {
         await deductCredits.mutateAsync({
           userId: user.id,
           featureType: 'prompt_generation',
-          provider,
-          model: provider === 'openai' ? 'gpt-4-turbo-preview' : 'claude-3-sonnet-20240229',
+          provider: aiConfig.provider,
+          model: aiConfig.model,
           promptLength,
           baseCost: costCalculation.baseCost,
           multiplier: costCalculation.multiplier,
@@ -70,8 +71,6 @@ export function useAIGeneration() {
           errorMessage
         });
       }
-
-      return await aiGenerator.generatePrompt(config, provider);
     },
   });
 }

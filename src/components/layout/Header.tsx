@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { 
@@ -9,11 +9,9 @@ import {
   Plus,
   Search,
   Library,
-  BarChart3,
   Sparkles,
   CreditCard,
-  Menu,
-  X
+  Menu
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -26,6 +24,7 @@ import { Button } from "../ui/button";
 import { Sheet, SheetClose, SheetContent, SheetTrigger } from "../ui/sheet";
 import { Badge } from "../ui/badge";
 import { CreditsDisplay } from '../payment/CreditsDisplay';
+import { SimpleThemeToggle } from '../SimpleThemeToggle';
 import { useSubscriptionInfo } from '../../hooks/usePayment';
 
 const navigation = [
@@ -33,7 +32,7 @@ const navigation = [
   { name: 'Editor', href: '/editor', icon: Plus },
   { name: 'Explorer', href: '/explorer', icon: Search },
   { name: 'Library', href: '/library', icon: Library },
-  { name: 'Analytics', href: '/analytics', icon: BarChart3 },
+  // { name: 'Analytics', href: '/analytics', icon: BarChart3 }, // Disabled - not available yet
 ];
 
 export function Header() {
@@ -81,6 +80,11 @@ export function Header() {
             </div>
           )}
 
+          {/* Theme Toggle - Desktop */}
+          <div className="hidden md:block">
+            <SimpleThemeToggle />
+          </div>
+
           {user ? (
             <>
               {/* Mobile Menu */}
@@ -119,6 +123,14 @@ export function Header() {
 
                     {/* Mobile User Menu */}
                     <div className="border-t pt-4 space-y-2">
+                      {/* Theme Toggle - Mobile */}
+                      <div className="px-2 mb-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">Theme</span>
+                          <SimpleThemeToggle />
+                        </div>
+                      </div>
+                      
                       <SheetClose asChild>
                         <Button variant="ghost" asChild className="justify-start h-12">
                           <Link to="/profile" className="flex items-center space-x-3">
@@ -162,10 +174,8 @@ export function Header() {
               {/* Desktop User Menu */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Button variant="ghost" className="relative h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
                       <User className="h-4 w-4 text-primary" />
-                    </div>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56" align="end" forceMount>
@@ -214,6 +224,8 @@ export function Header() {
             </>
           ) : (
             <div className="flex items-center space-x-2">
+              {/* Theme Toggle for non-authenticated users */}
+              <SimpleThemeToggle />
               <Button variant="ghost" asChild>
                 <Link to="/login">Sign In</Link>
               </Button>

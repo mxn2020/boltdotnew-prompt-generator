@@ -4,13 +4,17 @@ import { useComponents, useCreateComponent, useRateComponent } from '../../../ho
 import { cn } from '../../../lib/utils';
 import { useNavigate } from 'react-router-dom';
 import type { Component, ComponentType, ComponentFilters } from '../../../types/component';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface ComponentLibraryProps {
   onSelectComponent?: (component: Component) => void;
   onCreateComponent?: () => void;
   embedded?: boolean;
 }
-
 
 export function ComponentLibrary({ onSelectComponent, onCreateComponent, embedded = false }: ComponentLibraryProps) {
   const navigate = useNavigate();
@@ -42,68 +46,55 @@ export function ComponentLibrary({ onSelectComponent, onCreateComponent, embedde
   ];
 
   return (
-    <div className={cn('bg-white', embedded ? 'rounded-lg border border-gray-200' : '')}>
+    <Card className={cn(embedded ? 'border' : 'border-0 shadow-none')}>
       {/* Header */}
-      <div className="p-6 border-b border-gray-200">
-        <div className="flex items-center justify-between mb-4">
+      <CardHeader className="pb-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">Component Library</h2>
-            <p className="text-sm text-gray-600">
+            <CardTitle className="text-xl">Component Library</CardTitle>
+            <p className="text-sm text-muted-foreground mt-1">
               Reusable modules, wrappers, and templates for prompt engineering
             </p>
           </div>
           {onCreateComponent && (
-            <button
-              onClick={onCreateComponent}
-              className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
-              <Plus className="w-4 h-4" />
-              <span>Create Component</span>
-            </button>
+            <Button onClick={onCreateComponent} className="w-full sm:w-auto">
+              <Plus className="w-4 h-4 mr-2" />
+              Create Component
+            </Button>
           )}
-          <button
-            onClick={() => navigate(`/component-editor/${component.id}`)}
-            className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            <Edit className="w-4 h-4" />
-          </button>
         </div>
 
         {/* Search and Filters */}
-        <div className="flex flex-col lg:flex-row gap-4">
-          <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search components..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
+        <div className="flex flex-col lg:flex-row gap-4 mt-4">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search components..."
+              className="pl-10"
+            />
           </div>
           
-          <div className="flex items-center space-x-4">
-            <button className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-              <Filter className="w-4 h-4" />
-              <span>Filters</span>
-            </button>
-          </div>
+          <Button variant="outline" className="w-full lg:w-auto">
+            <Filter className="w-4 h-4 mr-2" />
+            Filters
+          </Button>
         </div>
-      </div>
+      </CardHeader>
 
       {/* Component Type Tabs */}
-      <div className="border-b border-gray-200">
-        <nav className="flex space-x-8 px-6">
+      <div className="border-b border-border px-6">
+        <nav className="flex space-x-8">
           {componentTypes.map((type) => (
             <button
               key={type.value}
               onClick={() => setSelectedType(type.value)}
               className={cn(
-                'py-4 px-1 border-b-2 font-medium text-sm transition-colors',
+                'py-4 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap',
                 selectedType === type.value
-                  ? 'border-indigo-500 text-indigo-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground'
               )}
             >
               {type.label} ({type.count})
@@ -113,25 +104,26 @@ export function ComponentLibrary({ onSelectComponent, onCreateComponent, embedde
       </div>
 
       {/* Components Grid */}
-      <div className="p-6">
+      <CardContent className="p-6">
         {isLoading ? (
-          <div className="text-center py-8">Loading components...</div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (
+              <Skeleton key={i} className="h-48 w-full" />
+            ))}
+          </div>
         ) : filteredComponents.length === 0 ? (
           <div className="text-center py-12">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Search className="w-8 h-8 text-gray-400" />
+            <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+              <Search className="w-8 h-8 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No components found</h3>
-            <p className="text-gray-600 mb-6">
+            <h3 className="text-lg font-semibold mb-2">No components found</h3>
+            <p className="text-muted-foreground mb-6">
               {searchQuery ? 'Try adjusting your search terms.' : 'No components available for the selected type.'}
             </p>
             {onCreateComponent && (
-              <button
-                onClick={onCreateComponent}
-                className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
-              >
+              <Button onClick={onCreateComponent}>
                 Create First Component
-              </button>
+              </Button>
             )}
           </div>
         ) : (
@@ -150,8 +142,8 @@ export function ComponentLibrary({ onSelectComponent, onCreateComponent, embedde
             ))}
           </div>
         )}
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -162,77 +154,89 @@ interface ComponentCardProps {
 }
 
 function ComponentCard({ component, onSelect, onRate }: ComponentCardProps) {
+  const navigate = useNavigate();
+
   const typeColors = {
-    module: 'bg-purple-100 text-purple-800',
-    wrapper: 'bg-blue-100 text-blue-800',
-    template: 'bg-green-100 text-green-800',
-    asset: 'bg-orange-100 text-orange-800',
+    module: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
+    wrapper: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+    template: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+    asset: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
   };
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-colors">
-      <div className="flex items-start justify-between mb-3">
-        <div className="flex-1">
-          <h3 className="font-semibold text-gray-900 mb-1">{component.title}</h3>
-          <p className="text-sm text-gray-600 line-clamp-2">{component.description}</p>
-        </div>
-        <span className={cn(
-          'px-2 py-1 rounded-full text-xs font-medium ml-2',
-          typeColors[component.type]
-        )}>
-          {component.type}
-        </span>
-      </div>
-
-      <div className="flex flex-wrap gap-1 mb-3">
-        {component.tags.slice(0, 3).map((tag) => (
-          <span
-            key={tag}
-            className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs"
-          >
-            {tag}
-          </span>
-        ))}
-        {component.tags.length > 3 && (
-          <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs">
-            +{component.tags.length - 3}
-          </span>
-        )}
-      </div>
-
-      <div className="flex items-center justify-between text-sm text-gray-500 mb-3">
-        <div className="flex items-center space-x-3">
-          <div className="flex items-center space-x-1">
-            <Eye className="w-3 h-3" />
-            <span>{component.usage_count}</span>
+    <Card className="hover:shadow-md transition-shadow">
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold mb-1 truncate">{component.title}</h3>
+            <p className="text-sm text-muted-foreground line-clamp-2">
+              {component.description}
+            </p>
           </div>
-          <div className="flex items-center space-x-1">
-            <Star className="w-3 h-3 fill-current text-yellow-400" />
-            <span>{component.rating}</span>
-          </div>
+          <Badge className={cn('ml-2 flex-shrink-0', typeColors[component.type])}>
+            {component.type}
+          </Badge>
         </div>
-        <span>v{component.version_major}.{component.version_minor}.{component.version_batch}</span>
-      </div>
 
-      <div className="flex items-center space-x-2">
-        {onSelect && (
-          <button
-            onClick={() => onSelect(component)}
-            className="flex-1 bg-indigo-600 text-white px-3 py-2 rounded-lg text-sm hover:bg-indigo-700 transition-colors"
+        <div className="flex flex-wrap gap-1 mb-3">
+          {component.tags.slice(0, 3).map((tag) => (
+            <Badge key={tag} variant="secondary" className="text-xs">
+              {tag}
+            </Badge>
+          ))}
+          {component.tags.length > 3 && (
+            <Badge variant="secondary" className="text-xs">
+              +{component.tags.length - 3}
+            </Badge>
+          )}
+        </div>
+
+        <div className="flex items-center justify-between text-sm text-muted-foreground mb-3">
+          <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-1">
+              <Eye className="w-3 h-3" />
+              <span>{component.usage_count}</span>
+            </div>
+            <div className="flex items-center space-x-1">
+              <Star className="w-3 h-3 fill-current text-yellow-400" />
+              <span>{component.rating.toFixed(1)}</span>
+            </div>
+          </div>
+          <span>v{component.version_major}.{component.version_minor}.{component.version_batch}</span>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {onSelect && (
+            <Button 
+              onClick={() => onSelect(component)}
+              className="flex-1"
+              size="sm"
+            >
+              Use Component
+            </Button>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate(`/component-editor/${component.id}`)}
           >
-            Use Component
-          </button>
-        )}
-        <button className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-          <Download className="w-4 h-4" />
-        </button>
-        <button 
-          onClick={() => onRate?.(5)}
-          className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-        >
-          <Heart className="w-4 h-4" />
-        </button>
-      </div>
-    </div>
+            <Edit className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+          >
+            <Download className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onRate?.(5)}
+          >
+            <Heart className="w-4 h-4" />
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

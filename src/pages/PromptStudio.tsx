@@ -1,8 +1,8 @@
 import React from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Layout } from '../components/layout/Layout';
-import {
-  Sparkles,
+import { 
+  Sparkles, 
   Paperclip,
   Library,
   Wand2,
@@ -11,32 +11,41 @@ import {
 } from 'lucide-react';
 import { useAIGeneration } from '../hooks/useAIGeneration';
 import { useCreatePrompt } from '../hooks/usePrompts';
-import type { AIProvider } from '../lib/ai/providers';
+import { getCurrentModelDisplayName } from '../lib/ai/config';
+import { FileUpload } from '../components/prompt/FileUpload';
+import { SimpleComponentLibrary } from '../components/prompt/SimpleComponentLibrary';
 import type { GenerationConfig } from '../lib/ai/promptTemplates';
-import type { StructureType, Complexity } from '../types/prompt';
+import type { StructureType, Complexity, PromptType } from '../types/prompt';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger, SheetFooter } from "@/components/ui/sheet";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-
-import { FileUpload } from '../components/prompt/FileUpload';
-import { SimpleComponentLibrary } from '../components/prompt/SimpleComponentLibrary';
 import { PromptConfigurationPanel } from '@/components/prompt/PromptConfigurationPanel';
 
 export function PromptStudio() {
   const navigate = useNavigate();
   const [promptText, setPromptText] = React.useState('');
-  const [selectedProvider, setSelectedProvider] = React.useState<AIProvider>('openai');
   const [files, setFiles] = React.useState<File[]>([]);
-
+  
   // Panel visibility states
   const [showFilePanel, setShowFilePanel] = React.useState(false);
   const [showLibraryPanel, setShowLibraryPanel] = React.useState(false);
   const [showConfigPanel, setShowConfigPanel] = React.useState(false);
-
+  
+  // Temporary state for mobile sheets
+  const [tempFiles, setTempFiles] = React.useState<File[]>([]);
+  const [tempPromptConfig, setTempPromptConfig] = React.useState({
+    prompt_type: 'prompt' as PromptType,
+    structure_type: 'standard' as StructureType,
+    complexity: 'simple' as Complexity,
+    category: 'ai',
+    type: 'assistant',
+    language: 'english'
+  });
+  
   // Prompt configuration
   const [promptConfig, setPromptConfig] = React.useState({
     prompt_type: 'prompt' as PromptType,
@@ -46,13 +55,26 @@ export function PromptStudio() {
     type: 'assistant',
     language: 'english'
   });
-
+  
   const aiGeneration = useAIGeneration();
   const createPrompt = useCreatePrompt();
 
+  // Check if mobile (you might want to use a more sophisticated breakpoint hook)
+  const [isMobile, setIsMobile] = React.useState(false);
+  
+  React.useEffect(() => {
+    const checkIfMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkIfMobile();
+    window.addEventListener('resize', checkIfMobile);
+    return () => window.removeEventListener('resize', checkIfMobile);
+  }, []);
+
   const handleGenerate = async () => {
     if (!promptText.trim()) return;
-
+    
     const config: GenerationConfig = {
       userInput: promptText.trim(),
       structureType: promptConfig.structure_type,
@@ -64,8 +86,8 @@ export function PromptStudio() {
     };
 
     try {
-      const result = await aiGeneration.mutateAsync({ config, provider: selectedProvider });
-
+      const result = await aiGeneration.mutateAsync({ config });
+      
       // Create a new prompt with the generated content
       const newPrompt = await createPrompt.mutateAsync({
         title: `Generated Prompt - ${new Date().toLocaleDateString()}`,
@@ -79,10 +101,10 @@ export function PromptStudio() {
         is_public: false,
         tags: ['ai-generated'],
       });
-
+      
       // Navigate to the prompt editor to view/edit the result
       navigate(`/editor?prompt=${newPrompt.id}`);
-
+      
     } catch (error: any) {
       console.error('AI generation failed:', error);
     }
@@ -95,31 +117,215 @@ export function PromptStudio() {
     }
   };
 
-  const handleComponentSelect = (component: any) => {
-    setPromptText(prev => prev + `\n\nUsing component: ${component.title}\n${component.description}`);
-    setShowLibraryPanel(false);
+  // Mobile sheet handlers
+  const handleFileSheetOpen = () => {
+    setTempFiles([...files]);
+    setShowFilePanel(true);
+  };
+
+  const handleFileSheetApply = () => {
+    setFiles([...tempFiles]);
+    setShowFilePanel(false);
+  };
+
+  const handleFileSheetCancel = () => {
+    setTempFiles([]);
+    setShowFilePanel(false);
+  };
+
+  const handleConfigSheetOpen = () => {
+    setTempPromptConfig({...promptConfig});
+    setShowConfigPanel(true);
+  };
+
+  const handleConfigSheetApply = () => {
+    setPromptConfig({...tempPromptConfig});
+    setShowConfigPanel(false);
+  };
+
+  const handleConfigSheetCancel = () => {
+    setShowConfigPanel(false);
+  };
+
+  // File Attachment Component
+  const FileAttachmentButton = () => {
+    if (isMobile) {
+      return (
+        <Sheet open={showFilePanel} onOpenChange={setShowFilePanel}>
+          <SheetTrigger asChild>
+            <Button variant="ghost" size="sm" className="relative" onClick={handleFileSheetOpen}>
+              <Paperclip className="w-4 h-4" />
+              {files.length > 0 && (
+                <Badge variant="secondary" className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
+                  {files.length}
+                </Badge>
+              )}
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="bottom" className="h-[80vh]">
+            <SheetHeader>
+              <SheetTitle>Add Context Files</SheetTitle>
+              <SheetDescription>
+                Upload files to provide additional context for your prompt
+              </SheetDescription>
+            </SheetHeader>
+            <div className="py-6">
+              <FileUpload
+                files={tempFiles}
+                onFilesChange={setTempFiles}
+                maxFiles={5}
+                maxSize={10}
+              />
+            </div>
+            <SheetFooter className="gap-2">
+              <Button variant="outline" onClick={handleFileSheetCancel}>
+                Cancel
+              </Button>
+              <Button onClick={handleFileSheetApply}>
+                Apply ({tempFiles.length} files)
+              </Button>
+            </SheetFooter>
+          </SheetContent>
+        </Sheet>
+      );
+    }
+
+    return (
+      <Popover open={showFilePanel} onOpenChange={setShowFilePanel}>
+        <PopoverTrigger asChild>
+          <Button variant="ghost" size="sm" className="relative">
+            <Paperclip className="w-4 h-4" />
+            {files.length > 0 && (
+              <Badge variant="secondary" className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
+                {files.length}
+              </Badge>
+            )}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-80">
+          <FileUpload
+            files={files}
+            onFilesChange={setFiles}
+            maxFiles={5}
+            maxSize={10}
+          />
+        </PopoverContent>
+      </Popover>
+    );
+  };
+
+  // Component Library Button
+  const ComponentLibraryButton = () => {
+    if (isMobile) {
+      return (
+        <Sheet open={showLibraryPanel} onOpenChange={setShowLibraryPanel}>
+          <SheetTrigger asChild>
+            <Button variant="ghost" size="sm">
+              <Library className="w-4 h-4" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="bottom" className="h-[80vh]">
+            <SheetHeader>
+              <SheetTitle>Component Library</SheetTitle>
+              <SheetDescription>
+                Search and select reusable components for your prompt
+              </SheetDescription>
+            </SheetHeader>
+            <div className="py-6">
+              <SimpleComponentLibrary
+                onSelectComponent={(component) => {
+                  setPromptText(prev => prev + `\n\nUsing component: ${component.title}\n${component.description}`);
+                  setShowLibraryPanel(false);
+                }}
+              />
+            </div>
+          </SheetContent>
+        </Sheet>
+      );
+    }
+
+    return (
+      <Popover open={showLibraryPanel} onOpenChange={setShowLibraryPanel}>
+        <PopoverTrigger asChild>
+          <Button variant="ghost" size="sm">
+            <Library className="w-4 h-4" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-96 max-h-96 overflow-hidden">
+          <SimpleComponentLibrary
+            onSelectComponent={(component) => {
+              setPromptText(prev => prev + `\n\nUsing component: ${component.title}\n${component.description}`);
+              setShowLibraryPanel(false);
+            }}
+          />
+        </PopoverContent>
+      </Popover>
+    );
+  };
+
+  // Configuration Button
+  const ConfigurationButton = () => {
+    if (isMobile) {
+      return (
+        <Sheet open={showConfigPanel} onOpenChange={setShowConfigPanel}>
+          <SheetTrigger asChild>
+            <Button variant="ghost" size="sm" onClick={handleConfigSheetOpen}>
+              <Sliders className="w-4 h-4" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="bottom" className="h-[80vh]">
+            <SheetHeader>
+              <SheetTitle>Prompt Configuration</SheetTitle>
+              <SheetDescription>
+                Customize generation parameters for your prompt
+              </SheetDescription>
+            </SheetHeader>
+            <div className="py-6 overflow-y-auto">
+              <PromptConfigurationPanel
+                config={tempPromptConfig}
+                onChange={setTempPromptConfig}
+                isOpen={true}
+                onToggle={() => {}}
+                isMobile={true}
+              />
+            </div>
+            <SheetFooter className="gap-2">
+              <Button variant="outline" onClick={handleConfigSheetCancel}>
+                Cancel
+              </Button>
+              <Button onClick={handleConfigSheetApply}>
+                Apply Configuration
+              </Button>
+            </SheetFooter>
+          </SheetContent>
+        </Sheet>
+      );
+    }
+
+    return (
+      <Popover open={showConfigPanel} onOpenChange={setShowConfigPanel}>
+        <PopoverTrigger asChild>
+          <Button variant="ghost" size="sm">
+            <Sliders className="w-4 h-4" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[600px]">
+          <PromptConfigurationPanel
+            config={promptConfig}
+            onChange={setPromptConfig}
+            isOpen={true}
+            onToggle={() => setShowConfigPanel(false)}
+            isMobile={false}
+          />
+        </PopoverContent>
+      </Popover>
+    );
   };
 
   return (
     <Layout>
       <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-8">
-          {/* Top Bar */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-end gap-4 mb-8">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Model:</span>
-              <Select value={selectedProvider} onValueChange={(value) => setSelectedProvider(value as AIProvider)}>
-                <SelectTrigger className="w-[150px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="openai">GPT-4 Turbo</SelectItem>
-                  <SelectItem value="anthropic">Claude-3 Sonnet</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
           {/* Main Chat Interface */}
           <div className="max-w-4xl mx-auto">
             <Card className="w-full">
@@ -145,67 +351,18 @@ export function PromptStudio() {
                     className="min-h-[120px] resize-none"
                     disabled={aiGeneration.isPending}
                   />
-
-                  {/* Bottom Action Bar */}
+                
+                 {/* Bottom Action Bar */}
                   <div className="flex items-center justify-between mt-4">
                     <div className="flex items-center gap-2">
                       {/* File Attachment */}
-                      <Popover open={showFilePanel} onOpenChange={setShowFilePanel}>
-                        <PopoverTrigger asChild>
-                          <Button variant="ghost" size="sm" className="relative">
-                            <Paperclip className="w-4 h-4" />
-                            {files.length > 0 && (
-                              <Badge variant="secondary" className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
-                                {files.length}
-                              </Badge>
-                            )}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-80">
-                          <div className="space-y-3">
-                            <FileUpload
-                              files={files}
-                              onFilesChange={setFiles}
-                              maxFiles={5}
-                              maxSize={10}
-                            />
-                          </div>
-                        </PopoverContent>
-                      </Popover>
+                      <FileAttachmentButton />
 
                       {/* Component Library */}
-                      <Popover open={showLibraryPanel} onOpenChange={setShowLibraryPanel}>
-                        <PopoverTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <Library className="w-4 h-4" />
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-96 max-h-96 overflow-hidden">
-                          <SimpleComponentLibrary
-                            onSelectComponent={(component) => {
-                              setPromptText(prev => prev + `\n\nUsing component: ${component.title}\n${component.description}`);
-                              setShowLibraryPanel(false);
-                            }}
-                          />
-                        </PopoverContent>
-                      </Popover>
+                      <ComponentLibraryButton />
 
                       {/* Prompt Configuration */}
-                      <Popover open={showConfigPanel} onOpenChange={setShowConfigPanel}>
-                        <PopoverTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <Sliders className="w-4 h-4" />
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-[600px]"> {/* Changed from w-80 to w-[600px] */}
-                          <PromptConfigurationPanel
-                            config={promptConfig}
-                            onChange={setPromptConfig}
-                            isOpen={true}
-                            onToggle={() => setShowConfigPanel(false)}
-                          />
-                        </PopoverContent>
-                      </Popover>
+                      <ConfigurationButton />
                     </div>
 
                     {/* Generate Button */}
@@ -237,7 +394,7 @@ export function PromptStudio() {
                       <div>
                         <p className="font-medium">Creating your prompt with AI...</p>
                         <p className="text-sm text-muted-foreground">
-                          Using {selectedProvider === 'openai' ? 'GPT-4' : 'Claude-3'} to generate an optimized prompt
+                          Using {getCurrentModelDisplayName()} to generate an optimized prompt
                         </p>
                       </div>
                     </AlertDescription>

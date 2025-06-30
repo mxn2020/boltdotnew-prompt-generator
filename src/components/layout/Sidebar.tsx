@@ -5,7 +5,6 @@ import {
   Search, 
   Library, 
   FolderOpen, 
-  BarChart3, 
   Settings,
   Sparkles,
   Users,
@@ -23,7 +22,7 @@ const navigation = [
   { name: 'Explorer', href: '/explorer', icon: Search },
   { name: 'Library', href: '/library', icon: Library },
   { name: 'Collections', href: '/collections', icon: FolderOpen },
-  { name: 'Analytics', href: '/analytics', icon: BarChart3 },
+  // { name: 'Analytics', href: '/analytics', icon: BarChart3 }, // Disabled - not available yet
 ];
 
 const secondaryNavigation = [

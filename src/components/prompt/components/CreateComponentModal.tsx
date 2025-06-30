@@ -3,6 +3,15 @@ import { X, Code, Layers, FileText, Link } from 'lucide-react';
 import { useCreateComponent } from '../../../hooks/useComponents';
 import { cn } from '../../../lib/utils';
 import type { ComponentType } from '../../../types/component';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 interface CreateComponentModalProps {
   onClose: () => void;
@@ -50,8 +59,8 @@ export function CreateComponentModal({ onClose, onSuccess }: CreateComponentModa
     },
   ];
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
+    if (!formData.title.trim()) return;
     
     try {
       const result = await createComponent.mutateAsync({
@@ -65,7 +74,11 @@ export function CreateComponentModal({ onClose, onSuccess }: CreateComponentModa
       });
       
       // Navigate to component editor
-      window.location.href = `/component-editor/${result}`;
+      if (onSuccess) {
+        onSuccess(result);
+      } else {
+        window.location.href = `/component-editor/${result}`;
+      }
     } catch (error) {
       console.error('Failed to create component:', error);
     }
@@ -121,50 +134,46 @@ export function CreateComponentModal({ onClose, onSuccess }: CreateComponentModa
     }));
   };
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-hidden">
-        {/* Header */}
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-gray-900">Create New Component</h2>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
-            >
-              <X className="w-6 h-6" />
-            </button>
-          </div>
-        </div>
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addTag();
+    }
+  };
 
-        {/* Content */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+  return (
+    <Dialog open={true} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-hidden">
+        <DialogHeader>
+          <DialogTitle>Create New Component</DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-6 overflow-y-auto max-h-[calc(90vh-180px)] pr-2">
           {/* Component Type Selection */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-3">
-              Component Type
-            </label>
-            <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-3">
+            <Label className="text-base font-medium">Component Type</Label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {componentTypes.map((type) => {
                 const Icon = type.icon;
                 return (
-                  <button
+                  <Card
                     key={type.value}
-                    type="button"
-                    onClick={() => setFormData(prev => ({ ...prev, type: type.value as ComponentType }))}
                     className={cn(
-                      'p-4 rounded-lg border text-left transition-all',
+                      'cursor-pointer transition-all hover:shadow-md',
                       formData.type === type.value
-                        ? 'border-indigo-500 bg-indigo-50'
-                        : 'border-gray-200 hover:border-gray-300'
+                        ? 'ring-2 ring-primary border-primary'
+                        : 'hover:border-muted-foreground'
                     )}
+                    onClick={() => setFormData(prev => ({ ...prev, type: type.value as ComponentType }))}
                   >
-                    <div className="flex items-center space-x-3 mb-2">
-                      <Icon className="w-5 h-5 text-indigo-600" />
-                      <span className="font-medium text-gray-900">{type.label}</span>
-                    </div>
-                    <p className="text-sm text-gray-600">{type.description}</p>
-                  </button>
+                    <CardContent className="p-4">
+                      <div className="flex items-center space-x-3 mb-2">
+                        <Icon className="w-5 h-5 text-primary" />
+                        <span className="font-medium">{type.label}</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{type.description}</p>
+                    </CardContent>
+                  </Card>
                 );
               })}
             </div>
@@ -172,127 +181,108 @@ export function CreateComponentModal({ onClose, onSuccess }: CreateComponentModa
 
           {/* Basic Information */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Title
-              </label>
-              <input
-                type="text"
+            <div className="space-y-2">
+              <Label htmlFor="title">Title *</Label>
+              <Input
+                id="title"
                 value={formData.title}
                 onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
                 placeholder="Component title..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 required
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Category
-              </label>
-              <select
-                value={formData.category}
-                onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              >
-                <option value="general">General</option>
-                <option value="formatting">Formatting</option>
-                <option value="development">Development</option>
-                <option value="analysis">Analysis</option>
-                <option value="creative">Creative</option>
-                <option value="business">Business</option>
-              </select>
+            <div className="space-y-2">
+              <Label htmlFor="category">Category</Label>
+              <Select value={formData.category} onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="general">General</SelectItem>
+                  <SelectItem value="formatting">Formatting</SelectItem>
+                  <SelectItem value="development">Development</SelectItem>
+                  <SelectItem value="analysis">Analysis</SelectItem>
+                  <SelectItem value="creative">Creative</SelectItem>
+                  <SelectItem value="business">Business</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Description
-            </label>
-            <textarea
+          <div className="space-y-2">
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
               value={formData.description}
               onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
               placeholder="Describe what this component does..."
-              className="w-full h-20 px-3 py-2 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="min-h-[80px]"
             />
           </div>
 
           {/* Tags */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Tags
-            </label>
+          <div className="space-y-2">
+            <Label>Tags</Label>
             <div className="flex flex-wrap gap-2 mb-2">
               {formData.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="inline-flex items-center px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full text-sm"
-                >
+                <Badge key={tag} variant="secondary" className="flex items-center gap-1">
                   {tag}
-                  <button
-                    type="button"
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-auto p-0 hover:bg-transparent"
                     onClick={() => removeTag(tag)}
-                    className="ml-1 text-indigo-600 hover:text-indigo-800"
                   >
                     <X className="w-3 h-3" />
-                  </button>
-                </span>
+                  </Button>
+                </Badge>
               ))}
             </div>
-            <div className="flex space-x-2">
-              <input
-                type="text"
+            <div className="flex gap-2">
+              <Input
                 value={tagInput}
                 onChange={(e) => setTagInput(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
+                onKeyPress={handleKeyPress}
                 placeholder="Add a tag..."
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="flex-1"
               />
-              <button
-                type="button"
-                onClick={addTag}
-                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-              >
+              <Button type="button" onClick={addTag} variant="outline">
                 Add
-              </button>
+              </Button>
             </div>
           </div>
 
-          {/* Privacy */}
-          <div>
-            <label className="flex items-center space-x-3">
-              <input
-                type="checkbox"
-                checked={formData.is_public}
-                onChange={(e) => setFormData(prev => ({ ...prev, is_public: e.target.checked }))}
-                className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-              />
-              <div>
-                <div className="font-medium text-gray-900">Make Public</div>
-                <div className="text-sm text-gray-600">Allow others to discover and use this component</div>
-              </div>
-            </label>
+          {/* Privacy Setting */}
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="public"
+              checked={formData.is_public}
+              onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_public: !!checked }))}
+            />
+            <div className="grid gap-1.5 leading-none">
+              <Label htmlFor="public" className="text-sm font-medium">
+                Make Public
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Allow others to discover and use this component
+              </p>
+            </div>
           </div>
-        </form>
+        </div>
 
-        {/* Footer */}
-        <div className="p-6 border-t border-gray-200 flex items-center justify-between">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-          >
+        <DialogFooter className="gap-2">
+          <Button type="button" variant="outline" onClick={onClose}>
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={handleSubmit}
             disabled={createComponent.isPending || !formData.title.trim()}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {createComponent.isPending ? 'Creating...' : 'Create Component'}
-          </button>
-        </div>
-      </div>
-    </div>
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

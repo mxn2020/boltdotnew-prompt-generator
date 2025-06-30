@@ -26,7 +26,8 @@ import {
   useDeleteAPIKey 
 } from '../hooks/useProfile';
 import { PricingPlans } from '../components/payment/PricingPlans';
-import { CreditsDisplay } from '../components/payment/CreditsDisplay';
+import { CreditsDisplaySettings } from '../components/payment/CreditsDisplaySettings';
+import { SimpleThemeToggle } from '../components/SimpleThemeToggle';
 import { useAuth } from '../contexts/AuthContext';
 import { cn } from '../lib/utils';
 import type { UpdatePreferencesData, CreateAPIKeyData } from '../types/user';
@@ -160,7 +161,7 @@ function BillingSettings() {
           <CardTitle>Credits & Usage</CardTitle>
         </CardHeader>
         <CardContent>
-          <CreditsDisplay showTransactions={true} />
+          <CreditsDisplaySettings showTransactions={true} />
         </CardContent>
       </Card>
 
@@ -195,22 +196,12 @@ function GeneralSettings({ preferences, onUpdate, isLoading }: GeneralSettingsPr
         {/* Theme */}
         <div className="space-y-3">
           <Label>Theme Preference</Label>
-          <div className="grid grid-cols-3 gap-3">
-            {[
-              { value: 'light', label: 'Light', icon: '☀️' },
-              { value: 'dark', label: 'Dark', icon: '🌙' },
-              { value: 'system', label: 'System', icon: '💻' },
-            ].map((theme) => (
-              <Button
-                key={theme.value}
-                variant={preferences.theme === theme.value ? "default" : "outline"}
-                className="h-auto p-3 flex-col gap-2"
-                onClick={() => onUpdate({ theme: theme.value as any })}
-              >
-                <div className="text-2xl">{theme.icon}</div>
-                <div className="text-sm font-medium">{theme.label}</div>
-              </Button>
-            ))}
+          <div className="flex items-center justify-between p-3 border rounded-lg">
+            <div>
+              <p className="text-sm font-medium">Current Theme</p>
+              <p className="text-xs text-muted-foreground">Click to cycle through Light → Dark → System</p>
+            </div>
+            <SimpleThemeToggle />
           </div>
         </div>
 

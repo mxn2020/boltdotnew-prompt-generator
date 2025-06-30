@@ -21,9 +21,10 @@ interface PromptConfigurationPanelProps {
   onChange: (config: any) => void;
   isOpen: boolean;
   onToggle: () => void;
+  isMobile?: boolean;
 }
 
-export function PromptConfigurationPanel({ config, onChange, isOpen, onToggle }: PromptConfigurationPanelProps) {
+export function PromptConfigurationPanel({ config, onChange, isOpen, onToggle, isMobile = false }: PromptConfigurationPanelProps) {
   const updateConfig = (field: string, value: any) => {
     onChange({ ...config, [field]: value });
   };
@@ -104,9 +105,9 @@ export function PromptConfigurationPanel({ config, onChange, isOpen, onToggle }:
         <p className="text-sm text-muted-foreground">Customize generation parameters</p>
       </div>
 
-      {/* Two Column Layout */}
-      <div className="grid grid-cols-2 gap-6">
-        {/* Left Column */}
+      {/* Responsive Layout */}
+      <div className={isMobile ? "space-y-4" : "grid grid-cols-2 gap-8"}>
+        {/* Left Column / Mobile Stack */}
         <div className="space-y-4">
           {/* Prompt Type */}
           <div className="space-y-2">
@@ -117,7 +118,7 @@ export function PromptConfigurationPanel({ config, onChange, isOpen, onToggle }:
               value={config.prompt_type} 
               onValueChange={(value) => updateConfig('prompt_type', value)}
             >
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -145,7 +146,7 @@ export function PromptConfigurationPanel({ config, onChange, isOpen, onToggle }:
               value={config.structure_type} 
               onValueChange={(value) => updateConfig('structure_type', value)}
             >
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -173,7 +174,7 @@ export function PromptConfigurationPanel({ config, onChange, isOpen, onToggle }:
               value={config.complexity} 
               onValueChange={(value) => updateConfig('complexity', value)}
             >
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -201,7 +202,7 @@ export function PromptConfigurationPanel({ config, onChange, isOpen, onToggle }:
               value={config.category} 
               onValueChange={(value) => updateConfig('category', value)}
             >
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -226,7 +227,7 @@ export function PromptConfigurationPanel({ config, onChange, isOpen, onToggle }:
               value={config.type} 
               onValueChange={(value) => updateConfig('type', value)}
             >
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -251,7 +252,7 @@ export function PromptConfigurationPanel({ config, onChange, isOpen, onToggle }:
               value={config.language} 
               onValueChange={(value) => updateConfig('language', value)}
             >
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -266,25 +267,25 @@ export function PromptConfigurationPanel({ config, onChange, isOpen, onToggle }:
               </SelectContent>
             </Select>
           </div>
+        </div>
+      </div>
 
-          {/* Configuration Summary */}
-          <div className="pt-4 border-t space-y-3">
-            <Label className="text-sm font-medium">Active Configuration</Label>
-            <div className="flex flex-wrap gap-2">
-              <Badge variant="outline" className={getComplexityColor(config.complexity)}>
-                {config.complexity}
-              </Badge>
-              <Badge variant="outline">
-                {promptTypeOptions.find(p => p.value === config.prompt_type)?.icon} {promptTypeOptions.find(p => p.value === config.prompt_type)?.label}
-              </Badge>
-              <Badge variant="outline">
-                {structureOptions.find(s => s.value === config.structure_type)?.icon} {structureOptions.find(s => s.value === config.structure_type)?.label}
-              </Badge>
-              <Badge variant="outline">
-                {categoryOptions.find(c => c.value === config.category)?.icon} {categoryOptions.find(c => c.value === config.category)?.label}
-              </Badge>
-            </div>
-          </div>
+      {/* Configuration Summary */}
+      <div className="pt-4 border-t space-y-3">
+        <Label className="text-sm font-medium">Active Configuration</Label>
+        <div className="flex flex-wrap gap-2">
+          <Badge variant="outline" className={getComplexityColor(config.complexity)}>
+            {config.complexity}
+          </Badge>
+          <Badge variant="outline">
+            {promptTypeOptions.find(p => p.value === config.prompt_type)?.icon} {promptTypeOptions.find(p => p.value === config.prompt_type)?.label}
+          </Badge>
+          <Badge variant="outline">
+            {structureOptions.find(s => s.value === config.structure_type)?.icon} {structureOptions.find(s => s.value === config.structure_type)?.label}
+          </Badge>
+          <Badge variant="outline">
+            {categoryOptions.find(c => c.value === config.category)?.icon} {categoryOptions.find(c => c.value === config.category)?.label}
+          </Badge>
         </div>
       </div>
 

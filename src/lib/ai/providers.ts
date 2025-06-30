@@ -16,8 +16,8 @@ export const AI_PROVIDERS: Record<AIProvider, AIProviderConfig> = {
   openai: {
     id: 'openai',
     name: 'OpenAI GPT',
-    description: 'GPT-4 and GPT-3.5 models for versatile prompt generation',
-    models: ['gpt-4-turbo-preview', 'gpt-4', 'gpt-3.5-turbo'],
+    description: 'Latest GPT models including GPT-4.1, GPT-4o, and o3 series for versatile prompt generation',
+    models: ['gpt-4.1', 'gpt-4.1-mini', 'gpt-4.1-nano', 'gpt-4o', 'gpt-4o-mini', 'o3-mini', 'o4-mini', 'o3', 'o3-deep-research'],
     maxTokens: 4096,
     supportsStreaming: true,
   },
@@ -44,16 +44,18 @@ export function createAnthropicClient() {
   if (!apiKey) {
     throw new Error('Anthropic API key not configured');
   }
-  return new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
+  return new Anthropic({ apiKey });
 }
 
 export function getDefaultModel(provider: AIProvider): string {
+  // This function is now mainly for backward compatibility
+  // The actual default is managed by the global config
   switch (provider) {
     case 'openai':
-      return 'gpt-4-turbo-preview';
+      return 'gpt-4o-mini';
     case 'anthropic':
       return 'claude-3-sonnet-20240229';
     default:
-      return 'gpt-4-turbo-preview';
+      return 'gpt-4o-mini';
   }
 }
