@@ -26,13 +26,13 @@ export function PromptExplorer() {
   };
 
   const handleEdit = (prompt: any) => {
-    navigate(`/studio?prompt=${prompt.id}`);
+    navigate(`/editor?prompt=${prompt.id}`);
   };
 
   const handleClone = async (prompt: any) => {
     try {
       const clonedPrompt = await clonePrompt.mutateAsync(prompt.id);
-      navigate(`/studio?prompt=${clonedPrompt.id}`);
+      navigate(`/editor?prompt=${clonedPrompt.id}`);
     } catch (error) {
       console.error('Failed to clone prompt:', error);
     }
@@ -49,7 +49,7 @@ export function PromptExplorer() {
   };
 
   const handleNewPrompt = () => {
-    navigate('/studio');
+    navigate('/editor');
   };
 
   return (

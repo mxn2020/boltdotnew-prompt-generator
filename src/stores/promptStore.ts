@@ -111,7 +111,9 @@ export const usePromptStore = create<PromptEditorState>()(
       // Segment actions
       addSegment: (segmentData) => {
         const { currentPrompt } = get();
-        if (!currentPrompt) return;
+        if (!currentPrompt) {
+          return;
+        }
 
         const content = currentPrompt.content || {};
         const segments = content.segments || [];

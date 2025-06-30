@@ -9,7 +9,8 @@ import {
   Plus,
   Search,
   Library,
-  BarChart3
+  BarChart3,
+  Sparkles
 } from 'lucide-react';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { cn } from '../../lib/utils';

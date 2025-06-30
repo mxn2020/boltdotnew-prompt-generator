@@ -16,8 +16,8 @@ export function CommunityPage() {
   ];
 
   const handleSelectPrompt = (promptId: string) => {
-    // Navigate to prompt studio with the selected prompt
-    window.location.href = `/studio?prompt=${promptId}`;
+    // Navigate to prompt editor with the selected prompt
+    window.location.href = `/editor?prompt=${promptId}`;
   };
 
   const renderContent = () => {

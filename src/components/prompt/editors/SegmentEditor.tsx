@@ -30,6 +30,7 @@ export function SegmentEditor() {
   };
 
   const handleUpdateSegment = (id: string, field: keyof PromptSegment, value: any) => {
+    console.log('handleUpdateSegment called:', id, field, value);
     updateSegment(id, { [field]: value });
   };
 

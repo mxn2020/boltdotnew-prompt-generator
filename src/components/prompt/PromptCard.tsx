@@ -59,7 +59,7 @@ export function PromptCard({
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1 min-w-0">
           <Link 
-            to={`/studio?prompt=${prompt.id}`}
+            to={`/editor?prompt=${prompt.id}`}
             className="block group"
           >
             <h3 className={cn(

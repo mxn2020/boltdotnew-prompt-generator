@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
+import { ensureUserProfile } from '../lib/profile';
 
 interface AuthContextType {
   user: User | null;
@@ -63,12 +64,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (data.user && !error) {
       console.log('User signed up successfully:', data.user);
-      // Create profile
-      await supabase.from('profiles').insert({
-        id: data.user.id,
-        email: data.user.email!,
-        full_name: fullName || null,
-      });
+      // Create profile using utility function
+      const profileResult = await ensureUserProfile(data.user);
+      if (!profileResult.success) {
+        console.error('Failed to create profile during signup:', profileResult.error);
+        // Don't return error here as the user account was created successfully
+        // The profile can be created later during the first save
+      } else {
+        console.log('Profile created successfully during signup');
+      }
     }
 
     return { error };

@@ -2,6 +2,8 @@ import React from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Layout } from '../components/layout/Layout';
 import { Settings, Save, Download, Plus, AlertCircle, History, GitBranch } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import { ensureUserProfile } from '../lib/profile';
 import { usePromptStore } from '../stores/promptStore';
 import { usePrompt, useCreatePrompt, useUpdatePrompt } from '../hooks/usePrompts';
 import { useVersions, useCreateVersion, useRestoreVersion } from '../hooks/useVersions';
@@ -10,13 +12,14 @@ import { VersionHistory } from '../components/version/VersionHistory';
 import { DiffViewer } from '../components/version/DiffViewer';
 import { ExportDialog } from '../components/export/ExportDialog';
 import { VersionDiffer } from '../lib/version/differ';
-import type { StructureType, Complexity } from '../types/prompt';
+import type { StructureType, Complexity, Prompt } from '../types/prompt';
 import type { PromptVersion, VersionComparison } from '../types/version';
 
 export function PromptEditor() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const promptId = searchParams.get('prompt');
+  const { user } = useAuth();
   
   const { 
     currentPrompt, 
@@ -37,13 +40,17 @@ export function PromptEditor() {
   const [showVersionHistory, setShowVersionHistory] = React.useState(false);
   const [showExportDialog, setShowExportDialog] = React.useState(false);
   const [versionComparison, setVersionComparison] = React.useState<VersionComparison | null>(null);
+  const [saveError, setSaveError] = React.useState<string | null>(null);
 
   // Load existing prompt or create new one
   React.useEffect(() => {
-    if (promptId && existingPrompt) {
+    if (promptId && existingPrompt && !currentPrompt?.id) {
+      // Only load existing prompt if we don't already have it loaded
+      console.log('Loading existing prompt:', existingPrompt);
       setCurrentPrompt(existingPrompt);
     } else if (!promptId && !currentPrompt) {
-      // Create new prompt
+      // Create new prompt only if we don't have one
+      console.log('Creating new prompt');
       setCurrentPrompt({
         title: 'Untitled Prompt',
         description: '',
@@ -60,12 +67,28 @@ export function PromptEditor() {
         version_batch: 0,
       });
     }
-  }, [promptId, existingPrompt, currentPrompt, setCurrentPrompt]);
+  }, [promptId, existingPrompt, setCurrentPrompt]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSave = async () => {
     if (!currentPrompt) return;
 
+    // Clear any previous errors
+    setSaveError(null);
+
     try {
+      // Check if user is authenticated
+      if (!user) {
+        setSaveError('You must be logged in to save prompts');
+        return;
+      }
+
+      // Ensure user has a profile - create one if it doesn't exist
+      const profileResult = await ensureUserProfile(user);
+      if (!profileResult.success) {
+        setSaveError(profileResult.error || 'Failed to verify user profile');
+        return;
+      }
+
       if (currentPrompt.id) {
         // Update existing prompt
         await updatePrompt.mutateAsync({
@@ -104,6 +127,19 @@ export function PromptEditor() {
       markAsSaved();
     } catch (error) {
       console.error('Failed to save prompt:', error);
+      
+      // Enhanced error handling
+      if (error && typeof error === 'object' && 'code' in error) {
+        const supabaseError = error as { code: string; message: string; details?: string };
+        
+        if (supabaseError.code === '23503') {
+          setSaveError('User profile not found. Please refresh the page and try again, or contact support if the issue persists.');
+        } else {
+          setSaveError(`Save failed: ${supabaseError.message}`);
+        }
+      } else {
+        setSaveError('An unexpected error occurred while saving. Please try again.');
+      }
     }
   };
 
@@ -146,7 +182,7 @@ export function PromptEditor() {
     setVersionComparison(comparison);
   };
 
-  const handleExport = (result: any) => {
+  const handleExport = (result: { content: string; mimeType: string; filename: string }) => {
     // Create download link
     const blob = new Blob([result.content], { type: result.mimeType });
     const url = URL.createObjectURL(blob);
@@ -185,6 +221,22 @@ export function PromptEditor() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
+          {/* Error Display */}
+          {saveError && (
+            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <div className="flex items-center">
+                <AlertCircle className="w-5 h-5 text-red-600 mr-2" />
+                <p className="text-red-800">{saveError}</p>
+                <button
+                  onClick={() => setSaveError(null)}
+                  className="ml-auto text-red-600 hover:text-red-800"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+          )}
+
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Prompt Editor</h1>
@@ -270,14 +322,32 @@ export function PromptEditor() {
                   </label>
                   <select 
                     value={currentPrompt?.structure_type || 'standard'}
-                    onChange={(e) => updatePromptField('structure_type', e.target.value as StructureType)}
-                    className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    onChange={(e) => {
+                      const newStructureType = e.target.value as StructureType;
+                      console.log('Changing structure type from', currentPrompt?.structure_type, 'to', newStructureType);
+                      updatePromptField('structure_type', newStructureType);
+                      
+                      // Clear content when structure type changes to avoid compatibility issues
+                      if (currentPrompt?.structure_type !== newStructureType) {
+                        console.log('Clearing content due to structure type change');
+                        updatePromptField('content', {});
+                      }
+                    }}
+                    disabled={!!currentPrompt?.id}
+                    className={`w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                      currentPrompt?.id ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''
+                    }`}
                   >
                     <option value="standard">Standard (Segments)</option>
                     <option value="structured">Structured (Sections)</option>
                     <option value="modulized">Modulized (Modules)</option>
                     <option value="advanced">Advanced (Blocks)</option>
                   </select>
+                  {currentPrompt?.id && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Structure type cannot be changed for existing prompts
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -403,9 +473,9 @@ export function PromptEditor() {
           />
         )}
 
-        {showExportDialog && currentPrompt && (
+        {showExportDialog && currentPrompt && currentPrompt.id && (
           <ExportDialog
-            prompt={currentPrompt as any}
+            prompt={currentPrompt as Prompt}
             onClose={() => setShowExportDialog(false)}
             onExport={handleExport}
           />

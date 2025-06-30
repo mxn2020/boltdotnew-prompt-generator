@@ -117,17 +117,33 @@ export function useUpdatePrompt() {
 
   return useMutation({
     mutationFn: async ({ id, ...updates }: UpdatePromptData) => {
+      // First update the prompt with the changes (excluding version_batch)
       const { data, error } = await supabase
         .from('prompts')
         .update({
           ...updates,
-          version_batch: supabase.rpc('increment_version_batch', { prompt_id: id }),
+          updated_at: new Date().toISOString(),
         })
         .eq('id', id)
         .select()
         .single();
 
       if (error) throw error;
+
+      // Then increment the version batch
+      const { error: versionError } = await supabase.rpc('increment_version_batch', { prompt_id: id });
+      
+      if (versionError) throw versionError;
+
+      // Fetch the updated prompt with the new version batch
+      const { data: updatedPrompt, error: fetchError } = await supabase
+        .from('prompts')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (fetchError) throw fetchError;
+      return updatedPrompt as Prompt;
       return data as Prompt;
     },
     onSuccess: (data) => {
