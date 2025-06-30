@@ -228,9 +228,9 @@ BEGIN
   VALUES (target_user_id, 'free', 'active')
   ON CONFLICT (user_id) DO NOTHING;
   
-  -- Create credits record
+  -- Create credits record with 100 starting credits for free plan
   INSERT INTO user_credits (user_id, balance)
-  VALUES (target_user_id, 0)
+  VALUES (target_user_id, 100)
   ON CONFLICT (user_id) DO NOTHING;
   
   -- Create onboarding progress

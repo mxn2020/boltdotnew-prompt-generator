@@ -132,9 +132,10 @@ export function PricingPlans({ selectedPlan, onSelectPlan, showOnboarding = fals
 
                 {plan.credits > 0 && (
                   <div className="text-sm text-gray-600">
-                    {billingCycle === 'yearly' ? plan.credits * 12 : plan.credits} AI credits
-                    {billingCycle === 'yearly' && '/year'}
-                    {billingCycle === 'monthly' && '/month'}
+                    {planId === 'free' 
+                      ? `${plan.credits} AI credits to start`
+                      : `${billingCycle === 'yearly' ? plan.credits * 12 : plan.credits} AI credits${billingCycle === 'yearly' ? '/year' : '/month'}`
+                    }
                   </div>
                 )}
               </div>

@@ -113,13 +113,14 @@ export const PLAN_FEATURES: Record<string, PlanFeatures> = {
   free: {
     name: 'Free',
     price: 0,
-    credits: 0,
+    credits: 100,
     features: [
       'Create unlimited prompts',
       'Basic prompt structures',
       'Export to text/markdown',
       'Community access',
-      'Version control'
+      'Version control',
+      '100 AI credits to start'
     ]
   },
   pro: {
