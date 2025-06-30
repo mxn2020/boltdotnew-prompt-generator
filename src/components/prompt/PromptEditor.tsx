@@ -9,6 +9,9 @@ import { Sparkles } from 'lucide-react';
 export function PromptEditor() {
   const { currentPrompt } = usePromptStore();
 
+  // Determine if this is an asset
+  const isAsset = currentPrompt?.prompt_type !== 'prompt';
+
   if (!currentPrompt) {
     return (
       <div className="flex items-center justify-center h-full text-gray-500">
@@ -41,14 +44,20 @@ export function PromptEditor() {
   return (
     <div className="h-full flex flex-col">
       {/* Editor Header */}
-      <div className="border-b border-gray-200 p-4">
+      <div className={`border-b p-4 ${isAsset ? 'border-orange-200 bg-orange-50' : 'border-gray-200'}`}>
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-lg font-semibold text-gray-900">
               {currentPrompt.title || 'Untitled Prompt'}
             </h2>
-            <p className="text-sm text-gray-500">
-              {currentPrompt.structure_type} structure • {currentPrompt.complexity} complexity
+            <p className={`text-sm ${isAsset ? 'text-orange-600' : 'text-gray-500'}`}>
+              {isAsset ? (
+                <>
+                  <span className="font-medium">{currentPrompt.prompt_type?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())} Asset</span> • {currentPrompt.structure_type} structure
+                </>
+              ) : (
+                <>{currentPrompt.structure_type} structure • {currentPrompt.complexity} complexity</>
+              )}
             </p>
           </div>
           <div className="flex items-center space-x-2">

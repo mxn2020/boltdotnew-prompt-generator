@@ -54,7 +54,7 @@ export function CreateComponentModal({ onClose, onSuccess }: CreateComponentModa
     e.preventDefault();
     
     try {
-      const componentId = await createComponent.mutateAsync({
+      const result = await createComponent.mutateAsync({
         title: formData.title,
         description: formData.description,
         type: formData.type,
@@ -64,8 +64,8 @@ export function CreateComponentModal({ onClose, onSuccess }: CreateComponentModa
         is_public: formData.is_public,
       });
       
-      onSuccess?.(componentId);
-      onClose();
+      // Navigate to component editor
+      window.location.href = `/component-editor/${result}`;
     } catch (error) {
       console.error('Failed to create component:', error);
     }

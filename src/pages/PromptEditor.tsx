@@ -333,9 +333,9 @@ export function PromptEditor() {
                         updatePromptField('content', {});
                       }
                     }}
-                    disabled={!!currentPrompt?.id}
+                    disabled={!!currentPrompt?.id || currentPrompt?.prompt_type !== 'prompt'}
                     className={`w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
-                      currentPrompt?.id ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''
+                      (currentPrompt?.id || currentPrompt?.prompt_type !== 'prompt') ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''
                     }`}
                   >
                     <option value="standard">Standard (Segments)</option>
@@ -343,9 +343,14 @@ export function PromptEditor() {
                     <option value="modulized">Modulized (Modules)</option>
                     <option value="advanced">Advanced (Blocks)</option>
                   </select>
-                  {currentPrompt?.id && (
+                  {currentPrompt?.id && currentPrompt?.prompt_type === 'prompt' && (
                     <p className="text-xs text-gray-500 mt-1">
                       Structure type cannot be changed for existing prompts
+                    </p>
+                  )}
+                  {currentPrompt?.prompt_type !== 'prompt' && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Structure type is fixed for assets
                     </p>
                   )}
                 </div>

@@ -1,7 +1,8 @@
 import React from 'react';
-import { Search, Filter, Plus, Star, Download, Eye, Heart } from 'lucide-react';
+import { Search, Filter, Plus, Star, Download, Eye, Heart, Edit } from 'lucide-react';
 import { useComponents, useCreateComponent, useRateComponent } from '../../../hooks/useComponents';
 import { cn } from '../../../lib/utils';
+import { useNavigate } from 'react-router-dom';
 import type { Component, ComponentType, ComponentFilters } from '../../../types/component';
 
 interface ComponentLibraryProps {
@@ -12,6 +13,7 @@ interface ComponentLibraryProps {
 
 
 export function ComponentLibrary({ onSelectComponent, onCreateComponent, embedded = false }: ComponentLibraryProps) {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = React.useState('');
   const [filters, setFilters] = React.useState<ComponentFilters>({});
   const [selectedType, setSelectedType] = React.useState<ComponentType | 'all'>('all');
@@ -54,11 +56,17 @@ export function ComponentLibrary({ onSelectComponent, onCreateComponent, embedde
             <button
               onClick={onCreateComponent}
               className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-            >
+              className="flex-1 bg-indigo-600 text-white px-3 py-2 rounded-lg text-sm hover:bg-indigo-700 transition-colors mr-2"
               <Plus className="w-4 h-4" />
               <span>Create Component</span>
             </button>
           )}
+          <button
+            onClick={() => navigate(`/component-editor/${component.id}`)}
+            className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            <Edit className="w-4 h-4" />
+          </button>
         </div>
 
         {/* Search and Filters */}
@@ -156,7 +164,11 @@ interface ComponentCardProps {
 
 function ComponentCard({ component, onSelect, onRate }: ComponentCardProps) {
   const typeColors = {
-    module: 'bg-purple-100 text-purple-800',
+      if (clonedPrompt.prompt_type === 'prompt') {
+        navigate(`/editor?prompt=${clonedPrompt.id}`);
+      } else {
+        navigate(`/asset-editor/${clonedPrompt.id}`);
+      }
     wrapper: 'bg-blue-100 text-blue-800',
     template: 'bg-green-100 text-green-800',
     asset: 'bg-orange-100 text-orange-800',

@@ -24,6 +24,7 @@ interface PromptCardProps {
   onClone?: (prompt: Prompt) => void;
   onDelete?: (prompt: Prompt) => void;
   showAuthor?: boolean;
+  isAsset?: boolean;
   variant?: 'default' | 'compact';
 }
 
@@ -46,20 +47,22 @@ export function PromptCard({
   onClone, 
   onDelete, 
   showAuthor = true,
+  isAsset = false,
   variant = 'default' 
 }: PromptCardProps) {
   const isCompact = variant === 'compact';
 
   return (
     <div className={cn(
-      'bg-white rounded-lg border border-gray-200 hover:border-gray-300 transition-colors',
+      'bg-white rounded-lg border hover:border-gray-300 transition-colors',
+      isAsset ? 'border-orange-200' : 'border-gray-200',
       isCompact ? 'p-4' : 'p-6'
     )}>
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1 min-w-0">
           <Link 
-            to={`/editor?prompt=${prompt.id}`}
+            to={isAsset ? `/asset-editor/${prompt.id}` : `/editor?prompt=${prompt.id}`}
             className="block group"
           >
             <h3 className={cn(
@@ -89,6 +92,13 @@ export function PromptCard({
               <Lock className="w-4 h-4 text-gray-400" />
             )}
           </div>
+          
+          {/* Asset indicator */}
+          {isAsset && (
+            <div className="ml-2 px-2 py-1 bg-orange-100 text-orange-800 rounded-full text-xs font-medium">
+              {prompt.prompt_type?.replace('_', ' ')}
+            </div>
+          )}
 
           {/* Actions menu */}
           <DropdownMenu.Root>
@@ -143,12 +153,14 @@ export function PromptCard({
 
       {/* Tags */}
       <div className="flex flex-wrap gap-2 mb-4">
-        <span className={cn(
-          'px-2 py-1 rounded-full text-xs font-medium',
-          structureTypeColors[prompt.structure_type]
-        )}>
-          {prompt.structure_type}
-        </span>
+        {!isAsset && (
+          <span className={cn(
+            'px-2 py-1 rounded-full text-xs font-medium',
+            structureTypeColors[prompt.structure_type]
+          )}>
+            {prompt.structure_type}
+          </span>
+        )}
         
         <span className={cn(
           'px-2 py-1 rounded-full text-xs font-medium',

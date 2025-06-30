@@ -4,7 +4,6 @@ import { Layout } from '../components/layout/Layout';
 import { 
   Sparkles, 
   Plus, 
-  Settings, 
   Paperclip,
   Library,
   Wand2,
@@ -167,7 +166,7 @@ export function PromptStudio() {
                     {/* Add Files */}
                     <Popover.Root open={showFileUpload} onOpenChange={setShowFileUpload}>
                       <Popover.Trigger asChild>
-                        <button className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors" title="Add Files">
+                        <button className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors relative" title="Add Files">
                           <Paperclip className="w-4 h-4" />
                           {files.length > 0 && (
                             <span className="absolute -top-1 -right-1 bg-indigo-100 text-indigo-700 text-xs px-1.5 py-0.5 rounded-full min-w-[18px] h-[18px] flex items-center justify-center">
@@ -228,40 +227,6 @@ export function PromptStudio() {
                             config={promptConfig}
                             onChange={setPromptConfig}
                           />
-                          <Popover.Arrow className="fill-white" />
-                        </Popover.Content>
-                      </Popover.Portal>
-                    </Popover.Root>
-                    {/* AI Configuration */}
-                    <Popover.Root open={showConfigPanel} onOpenChange={setShowConfigPanel}>
-                      <Popover.Trigger asChild>
-                        <button className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors" title="AI Settings">
-                          <Settings className="w-4 h-4" />
-                        </button>
-                      </Popover.Trigger>
-                      <Popover.Portal>
-                        <Popover.Content className="bg-white border border-gray-200 rounded-xl shadow-lg w-80 z-50">
-                          <div className="p-4">
-                            <h3 className="font-medium text-gray-900 mb-3">AI Configuration</h3>
-                            <div className="space-y-3">
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                  Provider
-                                </label>
-                                <select
-                                  value={selectedProvider}
-                                  onChange={(e) => setSelectedProvider(e.target.value as AIProvider)}
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                >
-                                  <option value="openai">OpenAI GPT-4</option>
-                                  <option value="anthropic">Anthropic Claude-3</option>
-                                </select>
-                              </div>
-                              <div className="text-xs text-gray-500">
-                                Advanced settings available in Prompt Editor
-                              </div>
-                            </div>
-                          </div>
                           <Popover.Arrow className="fill-white" />
                         </Popover.Content>
                       </Popover.Portal>

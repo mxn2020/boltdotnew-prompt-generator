@@ -3,11 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { Layout } from '../components/layout/Layout';
 import { Search, Filter, Grid, List, Plus, Loader2 } from 'lucide-react';
 import { usePrompts, useClonePrompt, useDeletePrompt } from '../hooks/usePrompts';
+import { useAssets } from '../hooks/useAssets';
 import { PromptCard } from '../components/prompt/PromptCard';
 import type { PromptFilters, PromptSortOptions } from '../types/prompt';
 
 export function PromptExplorer() {
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = React.useState<'prompts' | 'assets'>('prompts');
   const [filters, setFilters] = React.useState<PromptFilters>({});
   const [sort, setSort] = React.useState<PromptSortOptions>({
     field: 'updated_at',
@@ -17,6 +19,7 @@ export function PromptExplorer() {
   const [viewMode, setViewMode] = React.useState<'grid' | 'list'>('grid');
 
   const { data: prompts, isLoading, error } = usePrompts(filters, sort);
+  const { data: assets, isLoading: assetsLoading } = useAssets(filters, sort);
   const clonePrompt = useClonePrompt();
   const deletePrompt = useDeletePrompt();
 
@@ -26,7 +29,11 @@ export function PromptExplorer() {
   };
 
   const handleEdit = (prompt: any) => {
-    navigate(`/editor?prompt=${prompt.id}`);
+    if (prompt.prompt_type === 'prompt') {
+      navigate(`/editor?prompt=${prompt.id}`);
+    } else {
+      navigate(`/asset-editor/${prompt.id}`);
+    }
   };
 
   const handleClone = async (prompt: any) => {
@@ -51,6 +58,15 @@ export function PromptExplorer() {
   const handleNewPrompt = () => {
     navigate('/editor');
   };
+  
+  const handleNewAsset = () => {
+    // For now, navigate to editor and we'll handle asset creation there
+    navigate('/editor?asset=true');
+  };
+  
+  const isLoaded = activeTab === 'prompts' ? !isLoading : !assetsLoading;
+  const items = activeTab === 'prompts' ? prompts : assets;
+  const isEmpty = !items || items.length === 0;
 
   return (
     <Layout>
@@ -61,16 +77,54 @@ export function PromptExplorer() {
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Prompt Explorer</h1>
               <p className="text-gray-600 mt-1">
-                Browse, search, and manage your prompt library
+                Browse, search, and manage your prompt and asset library
               </p>
             </div>
-            <button 
-              onClick={handleNewPrompt}
-              className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              <span>New Prompt</span>
-            </button>
+            <div className="flex items-center space-x-3">
+              {activeTab === 'prompts' ? (
+                <button 
+                  onClick={handleNewPrompt}
+                  className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>New Prompt</span>
+                </button>
+              ) : (
+                <button 
+                  onClick={handleNewAsset}
+                  className="flex items-center space-x-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>New Asset</span>
+                </button>
+              )}
+            </div>
+          </div>
+          
+          {/* Tabs */}
+          <div className="mt-4 border-b border-gray-200">
+            <nav className="flex space-x-8">
+              <button
+                onClick={() => setActiveTab('prompts')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  activeTab === 'prompts'
+                    ? 'border-indigo-500 text-indigo-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Prompts
+              </button>
+              <button
+                onClick={() => setActiveTab('assets')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  activeTab === 'assets'
+                    ? 'border-orange-500 text-orange-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Assets
+              </button>
+            </nav>
           </div>
         </div>
 
@@ -143,7 +197,7 @@ export function PromptExplorer() {
         </div>
 
         {/* Content */}
-        {isLoading ? (
+        {!isLoaded ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
           </div>
@@ -151,27 +205,38 @@ export function PromptExplorer() {
           <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
             <p className="text-red-600">Failed to load prompts. Please try again.</p>
           </div>
-        ) : !prompts || prompts.length === 0 ? (
+        ) : isEmpty ? (
           <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
             <div className="max-w-md mx-auto">
               <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Search className="w-8 h-8 text-gray-400" />
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                {searchQuery ? 'No prompts found' : 'No prompts yet'}
+                {searchQuery ? `No ${activeTab} found` : `No ${activeTab} yet`}
               </h3>
               <p className="text-gray-600 mb-6">
                 {searchQuery 
                   ? 'Try adjusting your search or filters to find what you\'re looking for.'
-                  : 'Start building your prompt library by creating your first prompt in the Studio.'
+                  : activeTab === 'prompts'
+                    ? 'Start building your prompt library by creating your first prompt in the Studio.'
+                    : 'Create your first asset to enhance your prompts with reusable components.'
                 }
               </p>
-              <button 
-                onClick={handleNewPrompt}
-                className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
-              >
-                {searchQuery ? 'Create New Prompt' : 'Create Your First Prompt'}
-              </button>
+              {activeTab === 'prompts' ? (
+                <button 
+                  onClick={handleNewPrompt}
+                  className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
+                >
+                  {searchQuery ? 'Create New Prompt' : 'Create Your First Prompt'}
+                </button>
+              ) : (
+                <button 
+                  onClick={handleNewAsset}
+                  className="bg-orange-600 text-white px-6 py-2 rounded-lg hover:bg-orange-700 transition-colors"
+                >
+                  {searchQuery ? 'Create New Asset' : 'Create Your First Asset'}
+                </button>
+              )}
             </div>
           </div>
         ) : (
@@ -180,14 +245,15 @@ export function PromptExplorer() {
               ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'
               : 'space-y-4'
           }>
-            {prompts.map((prompt) => (
+            {items.map((item) => (
               <PromptCard
-                key={prompt.id}
-                prompt={prompt}
+                key={item.id}
+                prompt={item}
                 onEdit={handleEdit}
                 onClone={handleClone}
                 onDelete={handleDelete}
                 variant={viewMode === 'list' ? 'compact' : 'default'}
+                isAsset={item.prompt_type !== 'prompt'}
               />
             ))}
           </div>

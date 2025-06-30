@@ -15,6 +15,8 @@ import { RegisterPage } from './pages/auth/RegisterPage';
 import { PromptStudio } from './pages/PromptStudio';
 import { PromptEditor } from './pages/PromptEditor';
 import { PromptExplorer } from './pages/PromptExplorer';
+import { ComponentEditorPage } from './pages/ComponentEditorPage';
+import { AssetEditorPage } from './pages/AssetEditorPage';
 import { ComponentLibraryPage } from './pages/ComponentLibraryPage';
 import { CommunityPage } from './pages/CommunityPage';
 import { CollectionsPage } from './pages/CollectionsPage';
@@ -62,6 +64,16 @@ function AppContent() {
         <Route path="/editor" element={
           <ProtectedRoute>
             <PromptEditor />
+          </ProtectedRoute>
+        } />
+        <Route path="/component-editor/:id" element={
+          <ProtectedRoute>
+            <ComponentEditorPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/asset-editor/:id" element={
+          <ProtectedRoute>
+            <AssetEditorPage />
           </ProtectedRoute>
         } />
         <Route path="/explorer" element={
