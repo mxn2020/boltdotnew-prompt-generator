@@ -314,6 +314,7 @@ export class ExportEngine {
   private static exportAsPrompty(prompt: Prompt, options: ExportOptions): string {
     let prompty = `PROMPT "${prompt.title}" VERSION ${prompt.version_major}.${prompt.version_minor}.${prompt.version_batch} {\n`;
 
+    // Add metadata section if requested
     if (options.includeMetadata) {
       prompty += '    METADATA {\n';
       if (prompt.description) {
@@ -326,12 +327,14 @@ export class ExportEngine {
       prompty += '    }\n\n';
     }
 
+    // Render content based on structure type
     prompty += this.renderContentAsPrompty(prompt.content);
     prompty += '}';
 
     return prompty;
   }
 
+  // Improved Prompty format rendering with better terminology
   private static renderContent(content: PromptContent, format: 'plain' | 'markdown' | 'html'): string {
     let output = '';
 
@@ -521,8 +524,9 @@ export class ExportEngine {
 
     if (content.segments) {
       content.segments.forEach((segment) => {
-        prompty += `    SEGMENT ${segment.type} {\n`;
-        prompty += `        content: "${segment.content.replace(/"/g, '\\"')}"\n`;
+        prompty += `    SEGMENT "${segment.type}" {\n`;
+        prompty += `        // ${segment.type.charAt(0).toUpperCase() + segment.type.slice(1)} segment\n`;
+        prompty += `        content: """\n${segment.content}\n"""\n`;
         prompty += `    }\n\n`;
       });
     }
@@ -530,40 +534,73 @@ export class ExportEngine {
     if (content.sections) {
       content.sections.forEach((section) => {
         prompty += `    SECTION "${section.title}" {\n`;
+        
         if (section.description) {
-          prompty += `        description: "${section.description.replace(/"/g, '\\"')}",\n`;
+          prompty += `        description: "${section.description.replace(/"/g, '\\"')}"\n`;
         }
-        prompty += `        content: "${section.content.replace(/"/g, '\\"')}"\n`;
+        
+        prompty += `        content: """\n${section.content}\n"""\n`;
         prompty += `    }\n\n`;
       });
     }
 
     if (content.modules) {
       content.modules.forEach((module) => {
-        prompty += `    MODULE "${module.title}"`;
+        prompty += `    MODULE "${module.title}"\n`;
+        
         if (module.wrappers && module.wrappers.length > 0) {
-          prompty += ` WRAPPERS ${module.wrappers.join(', ')}`;
+          module.wrappers.forEach(wrapper => {
+            prompty += `        PROCESS WITH "${wrapper}"\n`;
+          });
         }
-        prompty += ` {\n`;
+        
+        prompty += `    {\n`;
+        
         if (module.description) {
-          prompty += `        description: "${module.description.replace(/"/g, '\\"')}",\n`;
+          prompty += `        description: "${module.description.replace(/"/g, '\\"')}"\n`;
         }
-        prompty += `        content: "${module.content.replace(/"/g, '\\"')}"\n`;
+        
+        prompty += `        content: """\n${module.content}\n"""\n`;
         prompty += `    }\n\n`;
       });
     }
 
     if (content.blocks) {
       content.blocks.forEach((block) => {
-        prompty += `    BLOCK "${block.title}" {\n`;
+        prompty += `    BLOCK "${block.title}"\n    {\n`;
+        
         if (block.description) {
-          prompty += `        description: "${block.description.replace(/"/g, '\\"')}",\n`;
+          prompty += `        description: "${block.description.replace(/"/g, '\\"')}"\n`;
         }
+        
+        prompty += `        // Contains ${block.modules.length} modules\n`;
+        
         block.modules.forEach((module) => {
-          prompty += `        MODULE "${module.title}" {\n`;
-          prompty += `            content: "${module.content.replace(/"/g, '\\"')}"\n`;
+          prompty += `        MODULE "${module.title}"\n`;
+          
+          if (module.wrappers && module.wrappers.length > 0) {
+            module.wrappers.forEach(wrapper => {
+              prompty += `            PROCESS WITH "${wrapper}"\n`;
+            });
+          }
+          
+          prompty += `        {\n`;
+          prompty += `            content: """\n${module.content}\n"""\n`;
           prompty += `        }\n`;
         });
+        
+        if (block.assets && block.assets.length > 0) {
+          prompty += `        // Block assets\n`;
+          block.assets.forEach(asset => {
+            prompty += `        ASSET "${asset.type}" {\n`;
+            prompty += `            reference: "${asset.reference}"\n`;
+            if (asset.title) {
+              prompty += `            title: "${asset.title}"\n`;
+            }
+            prompty += `        }\n`;
+          });
+        }
+        
         prompty += `    }\n\n`;
       });
     }

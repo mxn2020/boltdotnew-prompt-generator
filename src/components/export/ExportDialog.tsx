@@ -1,9 +1,18 @@
 import React from 'react';
-import { Download, Settings, FileText, Code, Globe, Database } from 'lucide-react';
+import { Download, FileText, Code, Globe, Database, Copy, Check, X } from 'lucide-react';
 import { EXPORT_FORMATS, ExportEngine } from '../../lib/export/formats';
 import { cn } from '../../lib/utils';
 import type { Prompt } from '../../types/prompt';
 import type { ExportOptions, ExportResult } from '../../types/version';
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Badge } from "@/components/ui/badge";
 
 interface ExportDialogProps {
   prompt: Prompt;
@@ -25,6 +34,8 @@ export function ExportDialog({ prompt, onClose, onExport }: ExportDialogProps) {
   });
   const [isExporting, setIsExporting] = React.useState(false);
   const [preview, setPreview] = React.useState<string>('');
+
+  const [copied, setCopied] = React.useState(false);
 
   const selectedFormatConfig = EXPORT_FORMATS.find(f => f.id === selectedFormat);
 
@@ -57,6 +68,12 @@ export function ExportDialog({ prompt, onClose, onExport }: ExportDialogProps) {
     }
   };
 
+  const handleCopyToClipboard = () => {
+    navigator.clipboard.writeText(preview);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   const getFormatIcon = (formatId: string) => {
     switch (formatId) {
       case 'plain-text':
@@ -76,194 +93,230 @@ export function ExportDialog({ prompt, onClose, onExport }: ExportDialogProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden">
-        {/* Header */}
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900">Export Prompt</h2>
-              <p className="text-sm text-gray-600 mt-1">
-                Export "{prompt.title}" in your preferred format
-              </p>
-            </div>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-        </div>
+    <Dialog open={true} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-5xl max-h-[90vh] flex flex-col">
+        <DialogHeader>
+          <DialogTitle className="text-xl">Export Prompt</DialogTitle>
+          <p className="text-sm text-muted-foreground">
+            Export "{prompt.title}" in your preferred format
+          </p>
+        </DialogHeader>
 
-        {/* Content */}
-        <div className="flex h-[calc(90vh-120px)]">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 overflow-hidden h-[calc(90vh-180px)]">
           {/* Left Panel - Format Selection & Options */}
-          <div className="w-1/2 p-6 border-r border-gray-200 overflow-y-auto">
-            {/* Format Selection */}
-            <div className="mb-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-3">Export Format</h3>
-              <div className="grid grid-cols-1 gap-3">
-                {EXPORT_FORMATS.map((format) => {
-                  const Icon = getFormatIcon(format.id);
-                  return (
-                    <button
-                      key={format.id}
-                      onClick={() => setSelectedFormat(format.id)}
-                      className={cn(
-                        'p-4 rounded-lg border text-left transition-all',
-                        selectedFormat === format.id
-                          ? 'border-indigo-500 bg-indigo-50'
-                          : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                      )}
-                    >
-                      <div className="flex items-center space-x-3">
-                        <Icon className={cn(
-                          'w-5 h-5',
-                          selectedFormat === format.id ? 'text-indigo-600' : 'text-gray-400'
-                        )} />
-                        <div className="flex-1">
-                          <div className="font-medium text-gray-900">{format.name}</div>
-                          <div className="text-sm text-gray-600">{format.description}</div>
-                          <div className="text-xs text-gray-500 mt-1">.{format.extension}</div>
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+          <div className="overflow-y-auto pr-2">
+            <Tabs defaultValue="format" className="w-full">
+              <TabsList className="grid grid-cols-2 mb-4">
+                <TabsTrigger value="format">Format</TabsTrigger>
+                <TabsTrigger value="options">Options</TabsTrigger>
+              </TabsList>
 
-            {/* Export Options */}
-            <div className="mb-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-3">Export Options</h3>
-              <div className="space-y-4">
-                <label className="flex items-center space-x-3">
-                  <input
-                    type="checkbox"
-                    checked={options.includeMetadata}
-                    onChange={(e) => setOptions(prev => ({ ...prev, includeMetadata: e.target.checked }))}
-                    className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                  />
-                  <div>
-                    <div className="font-medium text-gray-900">Include Metadata</div>
-                    <div className="text-sm text-gray-600">Category, type, complexity, tags</div>
-                  </div>
-                </label>
-
-                <label className="flex items-center space-x-3">
-                  <input
-                    type="checkbox"
-                    checked={options.includeVersionInfo}
-                    onChange={(e) => setOptions(prev => ({ ...prev, includeVersionInfo: e.target.checked }))}
-                    className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                  />
-                  <div>
-                    <div className="font-medium text-gray-900">Include Version Info</div>
-                    <div className="text-sm text-gray-600">Version number and creation date</div>
-                  </div>
-                </label>
-              </div>
-            </div>
-
-            {/* Formatting Options */}
-            {selectedFormatConfig?.supportsCustomization && (
-              <div className="mb-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-3">Formatting</h3>
+              <TabsContent value="format" className="mt-0 space-y-4">
                 <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Indentation
-                    </label>
-                    <select
-                      value={options.formatting?.indentation || 2}
-                      onChange={(e) => setOptions(prev => ({
-                        ...prev,
-                        formatting: { ...prev.formatting, indentation: parseInt(e.target.value) }
-                      }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    >
-                      <option value={2}>2 spaces</option>
-                      <option value={4}>4 spaces</option>
-                      <option value={8}>8 spaces</option>
-                    </select>
-                  </div>
-
-                  <label className="flex items-center space-x-3">
-                    <input
-                      type="checkbox"
-                      checked={options.formatting?.lineBreaks ?? true}
-                      onChange={(e) => setOptions(prev => ({
-                        ...prev,
-                        formatting: { ...prev.formatting, lineBreaks: e.target.checked }
-                      }))}
-                      className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                    />
-                    <div>
-                      <div className="font-medium text-gray-900">Extra Line Breaks</div>
-                      <div className="text-sm text-gray-600">Add spacing between sections</div>
-                    </div>
-                  </label>
-
-                  <label className="flex items-center space-x-3">
-                    <input
-                      type="checkbox"
-                      checked={options.formatting?.comments ?? true}
-                      onChange={(e) => setOptions(prev => ({
-                        ...prev,
-                        formatting: { ...prev.formatting, comments: e.target.checked }
-                      }))}
-                      className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                    />
-                    <div>
-                      <div className="font-medium text-gray-900">Include Comments</div>
-                      <div className="text-sm text-gray-600">Add explanatory comments</div>
-                    </div>
-                  </label>
+                  <Label className="text-base font-medium">Export Format</Label>
+                  <RadioGroup 
+                    value={selectedFormat} 
+                    onValueChange={setSelectedFormat}
+                    className="grid grid-cols-1 gap-3"
+                  >
+                    {EXPORT_FORMATS.map((format) => {
+                      const Icon = getFormatIcon(format.id);
+                      return (
+                        <label
+                          key={format.id}
+                          className={cn(
+                            'flex items-center space-x-3 p-4 rounded-lg border cursor-pointer transition-all',
+                            selectedFormat === format.id
+                              ? 'border-primary bg-primary/5'
+                              : 'border-border hover:border-primary/50 hover:bg-muted/50'
+                          )}
+                        >
+                          <RadioGroupItem value={format.id} id={format.id} className="sr-only" />
+                          <Icon className={cn(
+                            'w-5 h-5 flex-shrink-0',
+                            selectedFormat === format.id ? 'text-primary' : 'text-muted-foreground'
+                          )} />
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium">{format.name}</div>
+                            <div className="text-sm text-muted-foreground">{format.description}</div>
+                            <Badge variant="outline" className="mt-1 text-xs">
+                              .{format.extension}
+                            </Badge>
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </RadioGroup>
                 </div>
-              </div>
-            )}
+              </TabsContent>
+
+              <TabsContent value="options" className="mt-0 space-y-6">
+                <div className="space-y-4">
+                  <Label className="text-base font-medium">Content Options</Label>
+                  
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="metadata">Include Metadata</Label>
+                        <p className="text-sm text-muted-foreground">
+                          Category, type, complexity, tags
+                        </p>
+                      </div>
+                      <Switch
+                        id="metadata"
+                        checked={options.includeMetadata}
+                        onCheckedChange={(checked) => setOptions(prev => ({ ...prev, includeMetadata: checked }))}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="version-info">Include Version Info</Label>
+                        <p className="text-sm text-muted-foreground">
+                          Version number and creation date
+                        </p>
+                      </div>
+                      <Switch
+                        id="version-info"
+                        checked={options.includeVersionInfo}
+                        onCheckedChange={(checked) => setOptions(prev => ({ ...prev, includeVersionInfo: checked }))}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {selectedFormatConfig?.supportsCustomization && (
+                  <div className="space-y-4">
+                    <Label className="text-base font-medium">Formatting Options</Label>
+                    
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="indentation">Indentation</Label>
+                        <Select
+                          value={String(options.formatting?.indentation || 2)}
+                          onValueChange={(value) => setOptions(prev => ({
+                            ...prev,
+                            formatting: { ...prev.formatting, indentation: parseInt(value) }
+                          }))}
+                        >
+                          <SelectTrigger id="indentation">
+                            <SelectValue placeholder="Select indentation" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="2">2 spaces</SelectItem>
+                            <SelectItem value="4">4 spaces</SelectItem>
+                            <SelectItem value="8">8 spaces</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <Label htmlFor="line-breaks">Extra Line Breaks</Label>
+                          <p className="text-sm text-muted-foreground">
+                            Add spacing between sections
+                          </p>
+                        </div>
+                        <Switch
+                          id="line-breaks"
+                          checked={options.formatting?.lineBreaks ?? true}
+                          onCheckedChange={(checked) => setOptions(prev => ({
+                            ...prev,
+                            formatting: { ...prev.formatting, lineBreaks: checked }
+                          }))}
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <Label htmlFor="comments">Include Comments</Label>
+                          <p className="text-sm text-muted-foreground">
+                            Add explanatory comments
+                          </p>
+                        </div>
+                        <Switch
+                          id="comments"
+                          checked={options.formatting?.comments ?? true}
+                          onCheckedChange={(checked) => setOptions(prev => ({
+                            ...prev,
+                            formatting: { ...prev.formatting, comments: checked }
+                          }))}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
           </div>
 
           {/* Right Panel - Preview */}
-          <div className="w-1/2 p-6 overflow-y-auto">
-            <h3 className="text-lg font-medium text-gray-900 mb-3">Preview</h3>
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 h-full">
-              <pre className="text-sm text-gray-800 whitespace-pre-wrap font-mono">
-                {preview}
-              </pre>
+          <div className="overflow-y-auto">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="text-base font-medium">Preview</Label>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={handleCopyToClipboard}
+                        className="h-8 gap-1"
+                      >
+                        {copied ? (
+                          <>
+                            <Check className="h-4 w-4" />
+                            <span>Copied</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="h-4 w-4" />
+                            <span>Copy</span>
+                          </>
+                        )}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Copy to clipboard</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+              <div className="relative bg-muted rounded-lg p-4 h-[calc(90vh-280px)] overflow-auto border">
+                <pre className="text-sm whitespace-pre-wrap font-mono">
+                  {preview}
+                </pre>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="p-6 border-t border-gray-200 flex items-center justify-between">
-          <div className="text-sm text-gray-600">
-            Format: <span className="font-medium">{selectedFormatConfig?.name}</span>
+        <DialogFooter className="flex-col sm:flex-row gap-2">
+          <div className="flex-1 text-sm text-muted-foreground">
             {selectedFormatConfig && (
-              <span className="ml-2">(.{selectedFormatConfig.extension})</span>
+              <span>
+                <span className="font-medium">{selectedFormatConfig.name}</span>
+                <span className="ml-1">(.{selectedFormatConfig.extension})</span>
+              </span>
             )}
           </div>
-          <div className="flex items-center space-x-3">
-            <button
-              onClick={onClose}
-              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-            >
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={onClose}>
+              <X className="w-4 h-4 mr-2" />
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={handleExport}
               disabled={isExporting}
-              className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="gap-2"
             >
               <Download className="w-4 h-4" />
-              <span>{isExporting ? 'Exporting...' : 'Export'}</span>
-            </button>
+              {isExporting ? 'Exporting...' : 'Download'}
+            </Button>
           </div>
-        </div>
-      </div>
-    </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
