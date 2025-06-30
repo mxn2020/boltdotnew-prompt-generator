@@ -3,7 +3,7 @@ import { useTheme } from '../hooks/useTheme';
 
 interface BoltBadgeProps {
   variant?: 'white' | 'black' | 'auto';
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'xl';
   position?: 'header' | 'footer';
 }
 
@@ -23,7 +23,8 @@ export function BoltBadge({
   const sizeClasses = {
     sm: 'w-8 h-8',
     md: 'w-12 h-12',
-    lg: 'w-16 h-16'
+    lg: 'w-16 h-16',
+    xl: 'w-24 h-24'
   };
   
   // Position-specific classes

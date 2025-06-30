@@ -55,7 +55,7 @@ export function LandingPage() {
        <div className="container mx-auto px-4 py-16 sm:py-24">
          {/* Bolt.new Badge - Top Right */}
          <div className="absolute top-4 right-4 md:top-8 md:right-8">
-           <BoltBadge size="md" variant="auto" />
+           <BoltBadge size="xl" variant="auto" />
          </div>
          
          <div className="text-center">
