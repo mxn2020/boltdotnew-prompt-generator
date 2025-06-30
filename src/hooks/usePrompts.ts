@@ -15,6 +15,8 @@ export function usePrompts(filters?: PromptFilters, sort?: PromptSortOptions) {
   return useQuery({
     queryKey: ['prompts', filters, sort, user?.id],
     queryFn: async () => {
+      if (!user) return [];
+      
       let query = supabase
         .from('prompts')
         .select('*');
@@ -42,7 +44,7 @@ export function usePrompts(filters?: PromptFilters, sort?: PromptSortOptions) {
 
       if (filters?.user_id) {
         query = query.eq('user_id', filters.user_id);
-      } else if (user) {
+      } else {
         // Default to user's prompts and public prompts
         query = query.or(`user_id.eq.${user.id},is_public.eq.true`);
       }

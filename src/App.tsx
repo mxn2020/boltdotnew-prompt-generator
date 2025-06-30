@@ -10,6 +10,7 @@ import { LandingPage } from './pages/LandingPage';
 import { LoginPage } from './pages/auth/LoginPage';
 import { RegisterPage } from './pages/auth/RegisterPage';
 import { PromptStudio } from './pages/PromptStudio';
+import { PromptEditor } from './pages/PromptEditor';
 import { PromptExplorer } from './pages/PromptExplorer';
 import { ComponentLibraryPage } from './pages/ComponentLibraryPage';
 import { CommunityPage } from './pages/CommunityPage';
@@ -40,6 +41,11 @@ function App() {
             <Route path="/studio" element={
               <ProtectedRoute>
                 <PromptStudio />
+              </ProtectedRoute>
+            } />
+            <Route path="/editor" element={
+              <ProtectedRoute>
+                <PromptEditor />
               </ProtectedRoute>
             } />
             <Route path="/explorer" element={

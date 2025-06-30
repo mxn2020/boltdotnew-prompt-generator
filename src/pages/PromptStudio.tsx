@@ -1,559 +1,346 @@
 import React from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Layout } from '../components/layout/Layout';
-import { Sparkles, Settings, Save, Download, Plus, AlertCircle, History, GitBranch } from 'lucide-react';
-import { usePromptStore } from '../stores/promptStore';
-import { usePrompt, useCreatePrompt, useUpdatePrompt } from '../hooks/usePrompts';
-import { useVersions, useCreateVersion, useRestoreVersion } from '../hooks/useVersions';
+import { 
+  Sparkles, 
+  Plus, 
+  Settings, 
+  Mic, 
+  Paperclip,
+  Library,
+  Wand2,
+  ChevronDown,
+  Send,
+  Loader2
+} from 'lucide-react';
 import { useAIGeneration } from '../hooks/useAIGeneration';
-import { PromptEditor } from '../components/prompt/PromptEditor';
-import { FileUpload } from '../components/prompt/FileUpload';
+import { useCreatePrompt } from '../hooks/usePrompts';
 import { ConfigurationPanel } from '../components/ai/ConfigurationPanel';
-import { GenerationHistory } from '../components/ai/GenerationHistory';
-import { VersionHistory } from '../components/version/VersionHistory';
-import { DiffViewer } from '../components/version/DiffViewer';
-import { ExportDialog } from '../components/export/ExportDialog';
-import { VersionDiffer } from '../lib/version/differ';
-import type { StructureType, Complexity } from '../types/prompt';
+import { FileUpload } from '../components/prompt/FileUpload';
+import { ComponentLibrary } from '../components/prompt/components/ComponentLibrary';
+import * as Popover from '@radix-ui/react-popover';
+import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import type { AIProvider } from '../lib/ai/providers';
 import type { GenerationConfig } from '../lib/ai/promptTemplates';
-import type { PromptVersion, VersionComparison } from '../types/version';
+import { cn } from '../lib/utils';
 
 export function PromptStudio() {
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const promptId = searchParams.get('prompt');
-  
-  const { 
-    currentPrompt, 
-    setCurrentPrompt, 
-    updatePromptField, 
-    hasUnsavedChanges,
-    markAsSaved 
-  } = usePromptStore();
-  
-  const { data: existingPrompt } = usePrompt(promptId || '');
-  const createPrompt = useCreatePrompt();
-  const updatePrompt = useUpdatePrompt();
-  const createVersion = useCreateVersion();
-  const restoreVersion = useRestoreVersion();
-  const aiGeneration = useAIGeneration();
-  
-  const { data: versions = [] } = useVersions(promptId || '');
-  
-  const [userInput, setUserInput] = React.useState('');
-  const [files, setFiles] = React.useState<File[]>([]);
+  const [promptText, setPromptText] = React.useState('');
   const [selectedProvider, setSelectedProvider] = React.useState<AIProvider>('openai');
-  const [generationHistory, setGenerationHistory] = React.useState<any[]>([]);
-  const [lastGeneration, setLastGeneration] = React.useState<any>(null);
-  const [showVersionHistory, setShowVersionHistory] = React.useState(false);
-  const [showExportDialog, setShowExportDialog] = React.useState(false);
-  const [versionComparison, setVersionComparison] = React.useState<VersionComparison | null>(null);
+  const [files, setFiles] = React.useState<File[]>([]);
+  const [showConfigPanel, setShowConfigPanel] = React.useState(false);
+  const [showFileUpload, setShowFileUpload] = React.useState(false);
+  const [showLibrary, setShowLibrary] = React.useState(false);
+  
+  const aiGeneration = useAIGeneration();
+  const createPrompt = useCreatePrompt();
 
-  // Load existing prompt or create new one
-  React.useEffect(() => {
-    if (promptId && existingPrompt) {
-      setCurrentPrompt(existingPrompt);
-    } else if (!promptId && !currentPrompt) {
-      // Create new prompt
-      setCurrentPrompt({
-        title: 'Untitled Prompt',
-        description: '',
-        content: {},
-        structure_type: 'standard',
-        category: 'ai',
-        type: 'assistant',
-        language: 'english',
-        complexity: 'simple',
-        is_public: false,
-        tags: [],
-        version_major: 1,
-        version_minor: 0,
-        version_batch: 0,
-      });
-    }
-  }, [promptId, existingPrompt, currentPrompt, setCurrentPrompt]);
-
-  const handleSave = async () => {
-    if (!currentPrompt) return;
-
-    try {
-      if (currentPrompt.id) {
-        // Update existing prompt
-        await updatePrompt.mutateAsync({
-          id: currentPrompt.id,
-          title: currentPrompt.title!,
-          description: currentPrompt.description,
-          content: currentPrompt.content!,
-          structure_type: currentPrompt.structure_type!,
-          category: currentPrompt.category!,
-          type: currentPrompt.type!,
-          language: currentPrompt.language!,
-          complexity: currentPrompt.complexity!,
-          is_public: currentPrompt.is_public,
-          tags: currentPrompt.tags,
-        });
-      } else {
-        // Create new prompt
-        const newPrompt = await createPrompt.mutateAsync({
-          title: currentPrompt.title!,
-          description: currentPrompt.description,
-          content: currentPrompt.content!,
-          structure_type: currentPrompt.structure_type!,
-          category: currentPrompt.category!,
-          type: currentPrompt.type!,
-          language: currentPrompt.language!,
-          complexity: currentPrompt.complexity!,
-          is_public: currentPrompt.is_public || false,
-          tags: currentPrompt.tags || [],
-        });
-        
-        // Update URL with new prompt ID
-        navigate(`/studio?prompt=${newPrompt.id}`, { replace: true });
-        setCurrentPrompt(newPrompt);
-      }
-      
-      markAsSaved();
-    } catch (error) {
-      console.error('Failed to save prompt:', error);
-    }
-  };
-
-  const handleGenerateWithAI = async () => {
-    if (!userInput.trim()) return;
-    
-    if (!currentPrompt) return;
+  const handleGenerate = async () => {
+    if (!promptText.trim()) return;
     
     const config: GenerationConfig = {
-      userInput: userInput.trim(),
-      structureType: currentPrompt.structure_type!,
-      complexity: currentPrompt.complexity!,
-      category: currentPrompt.category!,
-      type: currentPrompt.type!,
-      language: currentPrompt.language!,
+      userInput: promptText.trim(),
+      structureType: 'standard',
+      complexity: 'simple',
+      category: 'ai',
+      type: 'assistant',
+      language: 'english',
       fileContext: files.length > 0 ? `Uploaded ${files.length} context files` : undefined,
     };
 
     try {
       const result = await aiGeneration.mutateAsync({ config, provider: selectedProvider });
       
-      // Update the current prompt with generated content
-      updatePromptField('content', result.content);
-      
-      // Update generation stats
-      setLastGeneration({
-        provider: result.provider,
-        model: result.model,
-        generationTime: result.generationTime,
-        tokensUsed: result.tokensUsed,
+      // Create a new prompt with the generated content
+      const newPrompt = await createPrompt.mutateAsync({
+        title: `Generated Prompt - ${new Date().toLocaleDateString()}`,
+        description: `AI-generated prompt from: "${promptText.substring(0, 100)}..."`,
+        content: result.content,
+        structure_type: 'standard',
+        category: 'ai',
+        type: 'assistant',
+        language: 'english',
+        complexity: 'simple',
+        is_public: false,
+        tags: ['ai-generated'],
       });
       
-      // Add to history
-      const historyItem = {
-        id: crypto.randomUUID(),
-        timestamp: new Date(),
-        provider: result.provider,
-        model: result.model,
-        userInput: userInput.trim(),
-        generationTime: result.generationTime,
-        tokensUsed: result.tokensUsed,
-        success: true,
-      };
-      
-      setGenerationHistory(prev => [historyItem, ...prev.slice(0, 9)]); // Keep last 10
+      // Navigate to the prompt editor to view/edit the result
+      navigate(`/editor?prompt=${newPrompt.id}`);
       
     } catch (error: any) {
       console.error('AI generation failed:', error);
-      
-      // Add error to history
-      const historyItem = {
-        id: crypto.randomUUID(),
-        timestamp: new Date(),
-        provider: selectedProvider,
-        model: 'unknown',
-        userInput: userInput.trim(),
-        generationTime: 0,
-        success: false,
-        error: error.message || 'Generation failed',
-      };
-      
-      setGenerationHistory(prev => [historyItem, ...prev.slice(0, 9)]);
     }
   };
 
-  const handleCreateVersion = async (type: 'major' | 'minor') => {
-    if (!currentPrompt?.id) return;
-
-    const changelog = prompt('Enter changelog for this version (optional):');
-    
-    try {
-      await createVersion.mutateAsync({
-        prompt_id: currentPrompt.id,
-        version_type: type,
-        changelog: changelog || undefined,
-      });
-    } catch (error) {
-      console.error('Failed to create version:', error);
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      handleGenerate();
     }
-  };
-
-  const handleRestoreVersion = async (version: PromptVersion) => {
-    if (!currentPrompt?.id) return;
-
-    if (window.confirm(`Are you sure you want to restore to version ${version.version_major}.${version.version_minor}.${version.version_batch}?`)) {
-      try {
-        await restoreVersion.mutateAsync({
-          promptId: currentPrompt.id,
-          version,
-        });
-        
-        // Refresh current prompt
-        window.location.reload();
-      } catch (error) {
-        console.error('Failed to restore version:', error);
-      }
-    }
-  };
-
-  const handleCompareVersions = (from: PromptVersion, to: PromptVersion) => {
-    const comparison = VersionDiffer.compareVersions(from, to);
-    setVersionComparison(comparison);
-  };
-
-  const handleExport = (result: any) => {
-    // Create download link
-    const blob = new Blob([result.content], { type: result.mimeType });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = result.filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    
-    setShowExportDialog(false);
-  };
-
-  const handleNewPrompt = () => {
-    setCurrentPrompt({
-      title: 'Untitled Prompt',
-      description: '',
-      content: {},
-      structure_type: 'standard',
-      category: 'ai',
-      type: 'assistant',
-      language: 'english',
-      complexity: 'simple',
-      is_public: false,
-      tags: [],
-      version_major: 1,
-      version_minor: 0,
-      version_batch: 0,
-    });
-    navigate('/studio', { replace: true });
   };
 
   return (
     <Layout>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Prompt Studio</h1>
-              <p className="text-gray-600 mt-1">
-                Create intelligent prompts with AI-powered generation and advanced structuring
-              </p>
-            </div>
-            <div className="flex items-center space-x-3">
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-4xl mx-auto px-4 py-8">
+          {/* Top Bar */}
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center space-x-4">
               <button
-                onClick={handleNewPrompt}
-                className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                onClick={() => navigate('/editor')}
+                className="flex items-center space-x-2 px-4 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
               >
                 <Plus className="w-4 h-4" />
-                <span>New</span>
-              </button>
-              <button className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                <Settings className="w-4 h-4" />
-                <span>Settings</span>
-              </button>
-              <button
-                onClick={() => setShowVersionHistory(!showVersionHistory)}
-                className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                <History className="w-4 h-4" />
-                <span>Versions</span>
-              </button>
-              <button
-                onClick={() => setShowExportDialog(true)}
-                disabled={!currentPrompt}
-                className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Download className="w-4 h-4" />
-                <span>Export</span>
-              </button>
-              <button 
-                onClick={handleSave}
-                disabled={!hasUnsavedChanges || createPrompt.isPending || updatePrompt.isPending}
-                className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Save className="w-4 h-4" />
-                <span>
-                  {createPrompt.isPending || updatePrompt.isPending ? 'Saving...' : 'Save'}
-                </span>
+                <span>New Prompt</span>
               </button>
             </div>
+            
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-gray-600">Model:</span>
+              <DropdownMenu.Root>
+                <DropdownMenu.Trigger asChild>
+                  <button className="flex items-center space-x-2 px-3 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                    <span className="text-sm font-medium">
+                      {selectedProvider === 'openai' ? 'GPT-4' : 'Claude-3'}
+                    </span>
+                    <ChevronDown className="w-4 h-4" />
+                  </button>
+                </DropdownMenu.Trigger>
+                <DropdownMenu.Portal>
+                  <DropdownMenu.Content className="bg-white border border-gray-200 rounded-lg shadow-lg p-1 min-w-[150px] z-50">
+                    <DropdownMenu.Item
+                      onClick={() => setSelectedProvider('openai')}
+                      className="flex items-center px-3 py-2 text-sm hover:bg-gray-50 rounded cursor-pointer"
+                    >
+                      GPT-4 Turbo
+                    </DropdownMenu.Item>
+                    <DropdownMenu.Item
+                      onClick={() => setSelectedProvider('anthropic')}
+                      className="flex items-center px-3 py-2 text-sm hover:bg-gray-50 rounded cursor-pointer"
+                    >
+                      Claude-3 Sonnet
+                    </DropdownMenu.Item>
+                  </DropdownMenu.Content>
+                </DropdownMenu.Portal>
+              </DropdownMenu.Root>
+            </div>
           </div>
-        </div>
 
-        {/* Main Studio Interface */}
-        <div className={`grid gap-8 ${showVersionHistory ? 'grid-cols-1 xl:grid-cols-5' : 'grid-cols-1 xl:grid-cols-4'}`}>
-          {/* Left Panel - Input & Configuration */}
-          <div className="xl:col-span-1 space-y-6">
-            {/* User Input Section */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Describe Your Prompt</h3>
-              <textarea
-                value={userInput}
-                onChange={(e) => setUserInput(e.target.value)}
-                placeholder="Describe what you want your prompt to do... (up to 1000 characters)"
-                className="w-full h-32 p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                maxLength={1000}
-              />
-              <div className="flex justify-between items-center mt-2">
-                <span className="text-sm text-gray-500">{userInput.length}/1000 characters</span>
-              </div>
-              
-              {/* File Upload */}
-              <div className="mt-4">
-                <h4 className="text-sm font-medium text-gray-700 mb-2">Context Files</h4>
-                <FileUpload
-                  files={files}
-                  onFilesChange={setFiles}
-                  maxFiles={5}
-                  maxSize={10}
+          {/* Main Chat Interface */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+            {/* Chat Header */}
+            <div className="p-6 border-b border-gray-100">
+              <h1 className="text-2xl font-semibold text-gray-900 text-center">
+                What can I help you create today?
+              </h1>
+            </div>
+
+            {/* Chat Content */}
+            <div className="p-6">
+              {/* Main Textarea */}
+              <div className="relative">
+                <textarea
+                  value={promptText}
+                  onChange={(e) => setPromptText(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Describe the prompt you want to create..."
+                  className="w-full h-32 p-4 border border-gray-200 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 placeholder-gray-500"
+                  disabled={aiGeneration.isPending}
                 />
-              </div>
-            </div>
+                
+                {/* Bottom Action Bar */}
+                <div className="flex items-center justify-between mt-4">
+                  <div className="flex items-center space-x-2">
+                    {/* Add Files */}
+                    <Popover.Root open={showFileUpload} onOpenChange={setShowFileUpload}>
+                      <Popover.Trigger asChild>
+                        <button className="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors">
+                          <Paperclip className="w-4 h-4" />
+                          <span className="text-sm">Files</span>
+                          {files.length > 0 && (
+                            <span className="bg-indigo-100 text-indigo-700 text-xs px-2 py-1 rounded-full">
+                              {files.length}
+                            </span>
+                          )}
+                        </button>
+                      </Popover.Trigger>
+                      <Popover.Portal>
+                        <Popover.Content className="bg-white border border-gray-200 rounded-xl shadow-lg p-4 w-80 z-50">
+                          <div className="mb-3">
+                            <h3 className="font-medium text-gray-900">Add Context Files</h3>
+                            <p className="text-sm text-gray-600">Upload files to provide additional context</p>
+                          </div>
+                          <FileUpload
+                            files={files}
+                            onFilesChange={setFiles}
+                            maxFiles={5}
+                            maxSize={10}
+                          />
+                          <Popover.Arrow className="fill-white" />
+                        </Popover.Content>
+                      </Popover.Portal>
+                    </Popover.Root>
 
-            {/* AI Generation Panel */}
-            <ConfigurationPanel
-              provider={selectedProvider}
-              onProviderChange={setSelectedProvider}
-              isGenerating={aiGeneration.isPending}
-              onGenerate={handleGenerateWithAI}
-              canGenerate={!!userInput.trim() && !!currentPrompt}
-              lastGeneration={lastGeneration}
-            />
+                    {/* Add Library */}
+                    <Popover.Root open={showLibrary} onOpenChange={setShowLibrary}>
+                      <Popover.Trigger asChild>
+                        <button className="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors">
+                          <Library className="w-4 h-4" />
+                          <span className="text-sm">Library</span>
+                        </button>
+                      </Popover.Trigger>
+                      <Popover.Portal>
+                        <Popover.Content className="bg-white border border-gray-200 rounded-xl shadow-lg w-96 max-h-96 overflow-hidden z-50">
+                          <ComponentLibrary
+                            embedded={true}
+                            onSelectComponent={(component) => {
+                              // Add component to prompt text
+                              setPromptText(prev => prev + `\n\nUsing component: ${component.title}\n${component.description}`);
+                              setShowLibrary(false);
+                            }}
+                          />
+                          <Popover.Arrow className="fill-white" />
+                        </Popover.Content>
+                      </Popover.Portal>
+                    </Popover.Root>
 
-            {/* Configuration Panel */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Configuration</h3>
-              
-              <div className="space-y-4">
-                {/* Prompt Title */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Prompt Title
-                  </label>
-                  <input
-                    type="text"
-                    value={currentPrompt?.title || ''}
-                    onChange={(e) => updatePromptField('title', e.target.value)}
-                    className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    placeholder="Enter prompt title..."
-                  />
-                </div>
+                    {/* AI Configuration */}
+                    <Popover.Root open={showConfigPanel} onOpenChange={setShowConfigPanel}>
+                      <Popover.Trigger asChild>
+                        <button className="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors">
+                          <Settings className="w-4 h-4" />
+                          <span className="text-sm">Settings</span>
+                        </button>
+                      </Popover.Trigger>
+                      <Popover.Portal>
+                        <Popover.Content className="bg-white border border-gray-200 rounded-xl shadow-lg w-80 z-50">
+                          <div className="p-4">
+                            <h3 className="font-medium text-gray-900 mb-3">AI Configuration</h3>
+                            <div className="space-y-3">
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                  Provider
+                                </label>
+                                <select
+                                  value={selectedProvider}
+                                  onChange={(e) => setSelectedProvider(e.target.value as AIProvider)}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                >
+                                  <option value="openai">OpenAI GPT-4</option>
+                                  <option value="anthropic">Anthropic Claude-3</option>
+                                </select>
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                Advanced settings available in Prompt Editor
+                              </div>
+                            </div>
+                          </div>
+                          <Popover.Arrow className="fill-white" />
+                        </Popover.Content>
+                      </Popover.Portal>
+                    </Popover.Root>
+                  </div>
 
-                {/* Description */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Description
-                  </label>
-                  <textarea
-                    value={currentPrompt?.description || ''}
-                    onChange={(e) => updatePromptField('description', e.target.value)}
-                    className="w-full h-20 p-2 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    placeholder="Brief description of your prompt..."
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Structure Type
-                  </label>
-                  <select 
-                    value={currentPrompt?.structure_type || 'standard'}
-                    onChange={(e) => updatePromptField('structure_type', e.target.value as StructureType)}
-                    className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  {/* Generate Button */}
+                  <button
+                    onClick={handleGenerate}
+                    disabled={!promptText.trim() || aiGeneration.isPending}
+                    className={cn(
+                      'flex items-center space-x-2 px-6 py-2 rounded-xl font-medium transition-all',
+                      promptText.trim() && !aiGeneration.isPending
+                        ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm'
+                        : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    )}
                   >
-                    <option value="standard">Standard (Segments)</option>
-                    <option value="structured">Structured (Sections)</option>
-                    <option value="modulized">Modulized (Modules)</option>
-                    <option value="advanced">Advanced (Blocks)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Complexity
-                  </label>
-                  <select 
-                    value={currentPrompt?.complexity || 'simple'}
-                    onChange={(e) => updatePromptField('complexity', e.target.value as Complexity)}
-                    className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  >
-                    <option value="simple">Simple</option>
-                    <option value="medium">Medium</option>
-                    <option value="complex">Complex</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Category
-                  </label>
-                  <select 
-                    value={currentPrompt?.category || 'ai'}
-                    onChange={(e) => updatePromptField('category', e.target.value)}
-                    className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  >
-                    <option value="ai">AI Assistant</option>
-                    <option value="web">Web Development</option>
-                    <option value="data">Data Analysis</option>
-                    <option value="creative">Creative Writing</option>
-                    <option value="business">Business</option>
-                    <option value="research">Research</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Type
-                  </label>
-                  <select 
-                    value={currentPrompt?.type || 'assistant'}
-                    onChange={(e) => updatePromptField('type', e.target.value)}
-                    className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  >
-                    <option value="assistant">Assistant</option>
-                    <option value="analyzer">Analyzer</option>
-                    <option value="generator">Generator</option>
-                    <option value="optimizer">Optimizer</option>
-                    <option value="tool">Tool</option>
-                    <option value="agent">Agent</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Language
-                  </label>
-                  <select 
-                    value={currentPrompt?.language || 'english'}
-                    onChange={(e) => updatePromptField('language', e.target.value)}
-                    className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  >
-                    <option value="english">English</option>
-                    <option value="french">French</option>
-                    <option value="german">German</option>
-                    <option value="spanish">Spanish</option>
-                  </select>
+                    {aiGeneration.isPending ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Generating...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Wand2 className="w-4 h-4" />
+                        <span>Generate</span>
+                      </>
+                    )}
+                  </button>
                 </div>
               </div>
-            </div>
 
-            {/* Generation History */}
-            <GenerationHistory
-              history={generationHistory}
-              onRegenerate={(item) => {
-                setUserInput(item.userInput);
-                setSelectedProvider(item.provider);
-                handleGenerateWithAI();
-              }}
-              onClear={() => setGenerationHistory([])}
-            />
-          </div>
-
-          {/* Center Panel - Editor */}
-          <div className={showVersionHistory ? "xl:col-span-3" : "xl:col-span-3"}>
-            <div className="bg-white rounded-xl border border-gray-200 h-full min-h-[600px]">
-              {/* AI Generation Status */}
+              {/* Generation Status */}
               {aiGeneration.isPending && (
-                <div className="border-b border-gray-200 p-4 bg-purple-50">
+                <div className="mt-6 p-4 bg-purple-50 border border-purple-200 rounded-xl">
                   <div className="flex items-center space-x-3">
                     <Sparkles className="w-5 h-5 text-purple-600 animate-pulse" />
                     <div>
                       <p className="text-sm font-medium text-purple-900">
-                        Generating prompt with AI...
+                        Creating your prompt with AI...
                       </p>
                       <p className="text-xs text-purple-700">
-                        Using {selectedProvider} to create your {currentPrompt?.structure_type} prompt
+                        Using {selectedProvider === 'openai' ? 'GPT-4' : 'Claude-3'} to generate an optimized prompt
                       </p>
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* AI Generation Error */}
+              {/* Error State */}
               {aiGeneration.isError && (
-                <div className="border-b border-gray-200 p-4 bg-red-50">
+                <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-xl">
                   <div className="flex items-center space-x-3">
-                    <AlertCircle className="w-5 h-5 text-red-600" />
+                    <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
+                      <span className="text-white text-xs">!</span>
+                    </div>
                     <div>
                       <p className="text-sm font-medium text-red-900">
                         Generation failed
                       </p>
                       <p className="text-xs text-red-700">
-                        {aiGeneration.error?.message || 'Unknown error occurred'}
+                        {aiGeneration.error?.message || 'Please try again or check your API configuration'}
                       </p>
                     </div>
                   </div>
                 </div>
               )}
+            </div>
 
-              <PromptEditor />
+            {/* Quick Actions */}
+            <div className="px-6 pb-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <button
+                  onClick={() => setPromptText('Create a helpful AI assistant that can answer questions about web development and provide code examples.')}
+                  className="p-3 text-left border border-gray-200 rounded-lg hover:border-gray-300 hover:bg-gray-50 transition-colors"
+                >
+                  <div className="font-medium text-gray-900 text-sm">Web Dev Assistant</div>
+                  <div className="text-xs text-gray-600">Create a coding helper</div>
+                </button>
+                <button
+                  onClick={() => setPromptText('Design a creative writing assistant that helps with storytelling, character development, and plot structure.')}
+                  className="p-3 text-left border border-gray-200 rounded-lg hover:border-gray-300 hover:bg-gray-50 transition-colors"
+                >
+                  <div className="font-medium text-gray-900 text-sm">Creative Writer</div>
+                  <div className="text-xs text-gray-600">Storytelling assistant</div>
+                </button>
+                <button
+                  onClick={() => setPromptText('Build a data analysis expert that can interpret datasets, create visualizations, and provide insights.')}
+                  className="p-3 text-left border border-gray-200 rounded-lg hover:border-gray-300 hover:bg-gray-50 transition-colors"
+                >
+                  <div className="font-medium text-gray-900 text-sm">Data Analyst</div>
+                  <div className="text-xs text-gray-600">Data insights helper</div>
+                </button>
+              </div>
             </div>
           </div>
 
-          {/* Right Panel - Version History */}
-          {showVersionHistory && (
-            <div className="xl:col-span-1">
-              <VersionHistory
-                versions={versions}
-                currentVersion={versions.find(v => 
-                  v.version_major === currentPrompt?.version_major &&
-                  v.version_minor === currentPrompt?.version_minor &&
-                  v.version_batch === currentPrompt?.version_batch
-                )}
-                onSelectVersion={(version) => {
-                  // TODO: Implement version preview
-                  console.log('Selected version:', version);
-                }}
-                onRestoreVersion={handleRestoreVersion}
-                onCreateVersion={handleCreateVersion}
-                onCompareVersions={handleCompareVersions}
-              />
-            </div>
-          )}
+          {/* Keyboard Shortcut Hint */}
+          <div className="mt-4 text-center">
+            <p className="text-sm text-gray-500">
+              Press <kbd className="px-2 py-1 bg-gray-100 rounded text-xs">⌘ + Enter</kbd> to generate
+            </p>
+          </div>
         </div>
-
-        {/* Modals */}
-        {versionComparison && (
-          <DiffViewer
-            comparison={versionComparison}
-            onClose={() => setVersionComparison(null)}
-          />
-        )}
-
-        {showExportDialog && currentPrompt && (
-          <ExportDialog
-            prompt={currentPrompt as any}
-            onClose={() => setShowExportDialog(false)}
-            onExport={handleExport}
-          />
-        )}
       </div>
     </Layout>
   );

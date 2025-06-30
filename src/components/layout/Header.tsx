@@ -41,8 +41,15 @@ export function Header() {
                   to="/studio"
                   className="flex items-center space-x-1 text-gray-700 hover:text-indigo-600 transition-colors"
                 >
-                  <Plus className="w-4 h-4" />
+                  <Sparkles className="w-4 h-4" />
                   <span>Studio</span>
+                </Link>
+                <Link
+                  to="/editor"
+                  className="flex items-center space-x-1 text-gray-700 hover:text-indigo-600 transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Editor</span>
                 </Link>
                 <Link
                   to="/explorer"

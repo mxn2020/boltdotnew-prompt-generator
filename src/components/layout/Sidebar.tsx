@@ -14,7 +14,8 @@ import {
 import { cn } from '../../lib/utils';
 
 const navigation = [
-  { name: 'Prompt Studio', href: '/studio', icon: Plus },
+  { name: 'Prompt Studio', href: '/studio', icon: Sparkles },
+  { name: 'Prompt Editor', href: '/editor', icon: Plus },
   { name: 'Explorer', href: '/explorer', icon: Search },
   { name: 'Library', href: '/library', icon: Library },
   { name: 'Collections', href: '/collections', icon: FolderOpen },
