@@ -5,23 +5,24 @@ import {
   Sparkles, 
   Plus, 
   Settings, 
-  Mic, 
   Paperclip,
   Library,
   Wand2,
   ChevronDown,
-  Send,
-  Loader2
+  Loader2,
+  Sliders
 } from 'lucide-react';
 import { useAIGeneration } from '../hooks/useAIGeneration';
 import { useCreatePrompt } from '../hooks/usePrompts';
 import { ConfigurationPanel } from '../components/ai/ConfigurationPanel';
 import { FileUpload } from '../components/prompt/FileUpload';
 import { ComponentLibrary } from '../components/prompt/components/ComponentLibrary';
+import { PromptConfigPanel } from '../components/prompt/PromptConfigPanel';
 import * as Popover from '@radix-ui/react-popover';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import type { AIProvider } from '../lib/ai/providers';
 import type { GenerationConfig } from '../lib/ai/promptTemplates';
+import type { StructureType, Complexity } from '../types/prompt';
 import { cn } from '../lib/utils';
 
 export function PromptStudio() {
@@ -32,6 +33,16 @@ export function PromptStudio() {
   const [showConfigPanel, setShowConfigPanel] = React.useState(false);
   const [showFileUpload, setShowFileUpload] = React.useState(false);
   const [showLibrary, setShowLibrary] = React.useState(false);
+  const [showPromptConfig, setShowPromptConfig] = React.useState(false);
+  
+  // Prompt configuration
+  const [promptConfig, setPromptConfig] = React.useState({
+    structure_type: 'standard' as StructureType,
+    complexity: 'simple' as Complexity,
+    category: 'ai',
+    type: 'assistant',
+    language: 'english'
+  });
   
   const aiGeneration = useAIGeneration();
   const createPrompt = useCreatePrompt();
@@ -41,11 +52,11 @@ export function PromptStudio() {
     
     const config: GenerationConfig = {
       userInput: promptText.trim(),
-      structureType: 'standard',
-      complexity: 'simple',
-      category: 'ai',
-      type: 'assistant',
-      language: 'english',
+      structureType: promptConfig.structure_type,
+      complexity: promptConfig.complexity,
+      category: promptConfig.category,
+      type: promptConfig.type,
+      language: promptConfig.language,
       fileContext: files.length > 0 ? `Uploaded ${files.length} context files` : undefined,
     };
 
@@ -57,11 +68,11 @@ export function PromptStudio() {
         title: `Generated Prompt - ${new Date().toLocaleDateString()}`,
         description: `AI-generated prompt from: "${promptText.substring(0, 100)}..."`,
         content: result.content,
-        structure_type: 'standard',
-        category: 'ai',
-        type: 'assistant',
-        language: 'english',
-        complexity: 'simple',
+        structure_type: promptConfig.structure_type,
+        category: promptConfig.category,
+        type: promptConfig.type,
+        language: promptConfig.language,
+        complexity: promptConfig.complexity,
         is_public: false,
         tags: ['ai-generated'],
       });
@@ -156,11 +167,10 @@ export function PromptStudio() {
                     {/* Add Files */}
                     <Popover.Root open={showFileUpload} onOpenChange={setShowFileUpload}>
                       <Popover.Trigger asChild>
-                        <button className="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors">
+                        <button className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors" title="Add Files">
                           <Paperclip className="w-4 h-4" />
-                          <span className="text-sm">Files</span>
                           {files.length > 0 && (
-                            <span className="bg-indigo-100 text-indigo-700 text-xs px-2 py-1 rounded-full">
+                            <span className="absolute -top-1 -right-1 bg-indigo-100 text-indigo-700 text-xs px-1.5 py-0.5 rounded-full min-w-[18px] h-[18px] flex items-center justify-center">
                               {files.length}
                             </span>
                           )}
@@ -186,9 +196,8 @@ export function PromptStudio() {
                     {/* Add Library */}
                     <Popover.Root open={showLibrary} onOpenChange={setShowLibrary}>
                       <Popover.Trigger asChild>
-                        <button className="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors">
+                        <button className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors" title="Component Library">
                           <Library className="w-4 h-4" />
-                          <span className="text-sm">Library</span>
                         </button>
                       </Popover.Trigger>
                       <Popover.Portal>
@@ -206,12 +215,28 @@ export function PromptStudio() {
                       </Popover.Portal>
                     </Popover.Root>
 
+                    {/* Prompt Configuration */}
+                    <Popover.Root open={showPromptConfig} onOpenChange={setShowPromptConfig}>
+                      <Popover.Trigger asChild>
+                        <button className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors" title="Prompt Configuration">
+                          <Sliders className="w-4 h-4" />
+                        </button>
+                      </Popover.Trigger>
+                      <Popover.Portal>
+                        <Popover.Content className="bg-white border border-gray-200 rounded-xl shadow-lg w-80 z-50">
+                          <PromptConfigPanel
+                            config={promptConfig}
+                            onChange={setPromptConfig}
+                          />
+                          <Popover.Arrow className="fill-white" />
+                        </Popover.Content>
+                      </Popover.Portal>
+                    </Popover.Root>
                     {/* AI Configuration */}
                     <Popover.Root open={showConfigPanel} onOpenChange={setShowConfigPanel}>
                       <Popover.Trigger asChild>
-                        <button className="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors">
+                        <button className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors" title="AI Settings">
                           <Settings className="w-4 h-4" />
-                          <span className="text-sm">Settings</span>
                         </button>
                       </Popover.Trigger>
                       <Popover.Portal>

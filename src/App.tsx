@@ -17,6 +17,7 @@ import { PromptEditor } from './pages/PromptEditor';
 import { PromptExplorer } from './pages/PromptExplorer';
 import { ComponentLibraryPage } from './pages/ComponentLibraryPage';
 import { CommunityPage } from './pages/CommunityPage';
+import { CollectionsPage } from './pages/CollectionsPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { SettingsPage } from './pages/SettingsPage';
 
@@ -75,10 +76,7 @@ function AppContent() {
         } />
         <Route path="/collections" element={
           <ProtectedRoute>
-            <div className="p-8 text-center">
-              <h1 className="text-2xl font-bold">Collections</h1>
-              <p className="text-gray-600 mt-2">Coming in Step 6</p>
-            </div>
+            <CollectionsPage />
           </ProtectedRoute>
         } />
         <Route path="/analytics" element={

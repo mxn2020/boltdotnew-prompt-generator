@@ -1,5 +1,6 @@
 import React from 'react';
 import { Search, Filter, Plus, Star, Download, Eye, Heart } from 'lucide-react';
+import { useComponents, useCreateComponent, useRateComponent } from '../../../hooks/useComponents';
 import { cn } from '../../../lib/utils';
 import type { Component, ComponentType, ComponentFilters } from '../../../types/component';
 
@@ -9,83 +10,17 @@ interface ComponentLibraryProps {
   embedded?: boolean;
 }
 
-// Mock data for demonstration
-const mockComponents: Component[] = [
-  {
-    id: '1',
-    user_id: 'user1',
-    title: 'JSON Formatter',
-    description: 'Formats output as structured JSON with proper validation',
-    type: 'wrapper',
-    content: {
-      wrapperType: 'format-json',
-      wrapperLogic: 'Format the response as valid JSON with proper structure and validation.',
-    },
-    category: 'formatting',
-    tags: ['json', 'formatting', 'validation'],
-    is_public: true,
-    usage_count: 156,
-    rating: 4.8,
-    version_major: 1,
-    version_minor: 2,
-    version_batch: 0,
-    created_at: '2024-01-15T10:00:00Z',
-    updated_at: '2024-01-20T15:30:00Z',
-  },
-  {
-    id: '2',
-    user_id: 'user2',
-    title: 'Code Review Assistant',
-    description: 'Comprehensive code review module with best practices',
-    type: 'module',
-    content: {
-      moduleContent: 'Review the provided code for:\n- Code quality and readability\n- Performance optimizations\n- Security vulnerabilities\n- Best practices adherence',
-    },
-    category: 'development',
-    tags: ['code-review', 'development', 'quality'],
-    is_public: true,
-    usage_count: 89,
-    rating: 4.6,
-    version_major: 2,
-    version_minor: 0,
-    version_batch: 3,
-    created_at: '2024-01-10T08:00:00Z',
-    updated_at: '2024-01-25T12:00:00Z',
-  },
-  {
-    id: '3',
-    user_id: 'user1',
-    title: 'Data Analysis Template',
-    description: 'Template for structured data analysis and reporting',
-    type: 'template',
-    content: {
-      templateStructure: {
-        sections: [
-          { title: 'Data Overview', content: 'Analyze the provided dataset...' },
-          { title: 'Key Insights', content: 'Identify significant patterns...' },
-          { title: 'Recommendations', content: 'Provide actionable recommendations...' },
-        ],
-      },
-    },
-    category: 'analysis',
-    tags: ['data', 'analysis', 'reporting'],
-    is_public: true,
-    usage_count: 234,
-    rating: 4.9,
-    version_major: 1,
-    version_minor: 0,
-    version_batch: 0,
-    created_at: '2024-01-05T14:00:00Z',
-    updated_at: '2024-01-18T09:30:00Z',
-  },
-];
 
 export function ComponentLibrary({ onSelectComponent, onCreateComponent, embedded = false }: ComponentLibraryProps) {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [filters, setFilters] = React.useState<ComponentFilters>({});
   const [selectedType, setSelectedType] = React.useState<ComponentType | 'all'>('all');
 
-  const filteredComponents = mockComponents.filter(component => {
+  const { data: components, isLoading } = useComponents(filters);
+  const createComponent = useCreateComponent();
+  const rateComponent = useRateComponent();
+
+  const filteredComponents = (components || []).filter(component => {
     if (searchQuery && !component.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
         !component.description?.toLowerCase().includes(searchQuery.toLowerCase())) {
       return false;
@@ -97,11 +32,11 @@ export function ComponentLibrary({ onSelectComponent, onCreateComponent, embedde
   });
 
   const componentTypes: { value: ComponentType | 'all'; label: string; count: number }[] = [
-    { value: 'all', label: 'All Components', count: mockComponents.length },
-    { value: 'module', label: 'Modules', count: mockComponents.filter(c => c.type === 'module').length },
-    { value: 'wrapper', label: 'Wrappers', count: mockComponents.filter(c => c.type === 'wrapper').length },
-    { value: 'template', label: 'Templates', count: mockComponents.filter(c => c.type === 'template').length },
-    { value: 'asset', label: 'Assets', count: mockComponents.filter(c => c.type === 'asset').length },
+    { value: 'all', label: 'All Components', count: components?.length || 0 },
+    { value: 'module', label: 'Modules', count: components?.filter(c => c.type === 'module').length || 0 },
+    { value: 'wrapper', label: 'Wrappers', count: components?.filter(c => c.type === 'wrapper').length || 0 },
+    { value: 'template', label: 'Templates', count: components?.filter(c => c.type === 'template').length || 0 },
+    { value: 'asset', label: 'Assets', count: components?.filter(c => c.type === 'asset').length || 0 },
   ];
 
   return (
@@ -172,7 +107,9 @@ export function ComponentLibrary({ onSelectComponent, onCreateComponent, embedde
 
       {/* Components Grid */}
       <div className="p-6">
-        {filteredComponents.length === 0 ? (
+        {isLoading ? (
+          <div className="text-center py-8">Loading components...</div>
+        ) : filteredComponents.length === 0 ? (
           <div className="text-center py-12">
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <Search className="w-8 h-8 text-gray-400" />
@@ -197,6 +134,11 @@ export function ComponentLibrary({ onSelectComponent, onCreateComponent, embedde
                 key={component.id}
                 component={component}
                 onSelect={onSelectComponent}
+                onRate={(rating, review) => rateComponent.mutateAsync({
+                  componentId: component.id,
+                  rating,
+                  review
+                })}
               />
             ))}
           </div>
@@ -209,9 +151,10 @@ export function ComponentLibrary({ onSelectComponent, onCreateComponent, embedde
 interface ComponentCardProps {
   component: Component;
   onSelect?: (component: Component) => void;
+  onRate?: (rating: number, review?: string) => void;
 }
 
-function ComponentCard({ component, onSelect }: ComponentCardProps) {
+function ComponentCard({ component, onSelect, onRate }: ComponentCardProps) {
   const typeColors = {
     module: 'bg-purple-100 text-purple-800',
     wrapper: 'bg-blue-100 text-blue-800',
@@ -276,7 +219,10 @@ function ComponentCard({ component, onSelect }: ComponentCardProps) {
         <button className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
           <Download className="w-4 h-4" />
         </button>
-        <button className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+        <button 
+          onClick={() => onRate?.(5)}
+          className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+        >
           <Heart className="w-4 h-4" />
         </button>
       </div>
