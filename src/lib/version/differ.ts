@@ -303,13 +303,18 @@ export class VersionDiffer {
       });
     }
 
-    if (from.wrapper_id !== to.wrapper_id) {
+    // Compare wrappers
+    const fromWrappers = from.wrappers || [];
+    const toWrappers = to.wrappers || [];
+    
+    // Check if arrays are different
+    if (JSON.stringify(fromWrappers) !== JSON.stringify(toWrappers)) {
       changes.push({
         type: 'modified',
-        path: 'wrapper_id',
-        oldValue: from.wrapper_id,
-        newValue: to.wrapper_id,
-        description: `Module wrapper changed from ${from.wrapper_id || 'none'} to ${to.wrapper_id || 'none'}`,
+        path: 'wrappers',
+        oldValue: fromWrappers,
+        newValue: toWrappers,
+        description: `Module wrappers changed from [${fromWrappers.join(', ') || 'none'}] to [${toWrappers.join(', ') || 'none'}]`,
       });
     }
 

@@ -384,8 +384,8 @@ export class ExportEngine {
           if (module.description) {
             output += `${module.description}\n\n`;
           }
-          if (module.wrapper_id) {
-            output += `**Wrapper**: ${module.wrapper_id}\n\n`;
+          if (module.wrappers && module.wrappers.length > 0) {
+            output += `**Wrappers**: ${module.wrappers.join(', ')}\n\n`;
           }
           output += `${module.content}\n\n`;
         } else if (format === 'html') {
@@ -394,8 +394,8 @@ export class ExportEngine {
           if (module.description) {
             output += `<p><em>${module.description}</em></p>`;
           }
-          if (module.wrapper_id) {
-            output += `<span class="wrapper">Wrapper: ${module.wrapper_id}</span>`;
+          if (module.wrappers && module.wrappers.length > 0) {
+            output += `<span class="wrapper">Wrappers: ${module.wrappers.join(', ')}</span>`;
           }
           output += `<pre>${module.content}</pre>`;
           output += `</div>`;
@@ -404,8 +404,8 @@ export class ExportEngine {
           if (module.description) {
             output += `${module.description}\n`;
           }
-          if (module.wrapper_id) {
-            output += `Wrapper: ${module.wrapper_id}\n`;
+          if (module.wrappers && module.wrappers.length > 0) {
+            output += `Wrappers: ${module.wrappers.join(', ')}\n`;
           }
           output += `${module.content}\n\n`;
         }
@@ -482,8 +482,12 @@ export class ExportEngine {
         if (module.description) {
           xml += `      <description><![CDATA[${module.description}]]></description>\n`;
         }
-        if (module.wrapper_id) {
-          xml += `      <wrapper_id>${module.wrapper_id}</wrapper_id>\n`;
+        if (module.wrappers && module.wrappers.length > 0) {
+          xml += `      <wrappers>\n`;
+          module.wrappers.forEach(wrapper => {
+            xml += `        <wrapper>${wrapper}</wrapper>\n`;
+          });
+          xml += `      </wrappers>\n`;
         }
         xml += `      <content><![CDATA[${module.content}]]></content>\n`;
         xml += `    </module>\n`;
@@ -537,8 +541,8 @@ export class ExportEngine {
     if (content.modules) {
       content.modules.forEach((module) => {
         prompty += `    MODULE "${module.title}"`;
-        if (module.wrapper_id) {
-          prompty += ` WRAPPER ${module.wrapper_id}`;
+        if (module.wrappers && module.wrappers.length > 0) {
+          prompty += ` WRAPPERS ${module.wrappers.join(', ')}`;
         }
         prompty += ` {\n`;
         if (module.description) {
