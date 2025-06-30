@@ -1,4 +1,5 @@
 import React from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Layout } from '../components/layout/Layout';
 import { 
   Settings, 
@@ -14,7 +15,8 @@ import {
   EyeOff,
   Check,
   X,
-  AlertTriangle
+  AlertTriangle,
+  CreditCard
 } from 'lucide-react';
 import { 
   useUserPreferences, 
@@ -23,12 +25,16 @@ import {
   useCreateAPIKey, 
   useDeleteAPIKey 
 } from '../hooks/useProfile';
+import { PricingPlans } from '../components/payment/PricingPlans';
+import { CreditsDisplay } from '../components/payment/CreditsDisplay';
 import { useAuth } from '../contexts/AuthContext';
 import { cn } from '../lib/utils';
 import type { UpdatePreferencesData, CreateAPIKeyData } from '../types/user';
 
 export function SettingsPage() {
-  const [activeSection, setActiveSection] = React.useState<'general' | 'notifications' | 'privacy' | 'api-keys' | 'account'>('general');
+  const [searchParams] = useSearchParams();
+  const defaultTab = searchParams.get('tab') || 'general';
+  const [activeSection, setActiveSection] = React.useState<'general' | 'notifications' | 'privacy' | 'api-keys' | 'billing' | 'account'>(defaultTab as any);
 
   const { data: preferences } = useUserPreferences();
   const updatePreferences = useUpdatePreferences();
@@ -49,6 +55,7 @@ export function SettingsPage() {
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'privacy', label: 'Privacy', icon: Shield },
     { id: 'api-keys', label: 'API Keys', icon: Key },
+    { id: 'billing', label: 'Billing & Plans', icon: CreditCard },
     { id: 'account', label: 'Account', icon: User },
   ];
 
@@ -124,6 +131,10 @@ export function SettingsPage() {
               />
             )}
 
+            {activeSection === 'billing' && (
+              <BillingSettings />
+            )}
+
             {activeSection === 'account' && (
               <AccountSettings />
             )}
@@ -131,6 +142,24 @@ export function SettingsPage() {
         </div>
       </div>
     </Layout>
+  );
+}
+
+function BillingSettings() {
+  return (
+    <div className="space-y-8">
+      {/* Current Credits */}
+      <div className="bg-white rounded-xl border border-gray-200 p-6">
+        <h2 className="text-xl font-semibold text-gray-900 mb-6">Credits & Usage</h2>
+        <CreditsDisplay showTransactions={true} />
+      </div>
+
+      {/* Pricing Plans */}
+      <div className="bg-white rounded-xl border border-gray-200 p-6">
+        <h2 className="text-xl font-semibold text-gray-900 mb-6">Subscription Plans</h2>
+        <PricingPlans />
+      </div>
+    </div>
   );
 }
 

@@ -10,14 +10,18 @@ import {
   Search,
   Library,
   BarChart3,
-  Sparkles
+  Sparkles,
+  CreditCard
 } from 'lucide-react';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
+import { CreditsDisplay } from '../payment/CreditsDisplay';
+import { useSubscriptionInfo } from '../../hooks/usePayment';
 import { cn } from '../../lib/utils';
 
 export function Header() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const { data: subscriptionInfo } = useSubscriptionInfo();
 
   const handleSignOut = async () => {
     await signOut();
@@ -79,6 +83,13 @@ export function Header() {
 
           {/* User Menu */}
           <div className="flex items-center space-x-4">
+            {/* Credits Display */}
+            {user && subscriptionInfo?.can_use_ai && (
+              <div className="hidden md:block">
+                <CreditsDisplay compact={true} />
+              </div>
+            )}
+
             {user ? (
               <DropdownMenu.Root>
                 <DropdownMenu.Trigger asChild>
@@ -97,6 +108,11 @@ export function Header() {
                     className="min-w-[200px] bg-white rounded-lg shadow-lg border border-gray-200 p-1 z-50"
                     sideOffset={5}
                   >
+                    {/* Credits for mobile */}
+                    <div className="md:hidden p-3 border-b border-gray-200">
+                      <CreditsDisplay compact={true} />
+                    </div>
+
                     <DropdownMenu.Item asChild>
                       <Link
                         to="/profile"
@@ -116,6 +132,18 @@ export function Header() {
                         <span>Settings</span>
                       </Link>
                     </DropdownMenu.Item>
+
+                    {subscriptionInfo?.plan_type !== 'max' && (
+                      <DropdownMenu.Item asChild>
+                        <Link
+                          to="/settings?tab=billing"
+                          className="flex items-center space-x-2 px-3 py-2 text-sm text-indigo-600 hover:bg-indigo-50 rounded-md cursor-pointer"
+                        >
+                          <CreditCard className="w-4 h-4" />
+                          <span>Upgrade Plan</span>
+                        </Link>
+                      </DropdownMenu.Item>
+                    )}
 
                     <DropdownMenu.Separator className="h-px bg-gray-200 my-1" />
 

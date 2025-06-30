@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { ensureUserProfile } from '../lib/profile';
+import { useInitializeUserSubscription } from '../hooks/usePayment';
 
 interface AuthContextType {
   user: User | null;
@@ -27,12 +28,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const initializeSubscription = useInitializeUserSubscription();
 
   useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
+      
+      // Initialize subscription for existing user
+      if (session?.user) {
+        initializeSubscription.mutate(session.user.id);
+      }
+      
       setLoading(false);
     });
 
@@ -42,6 +50,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
+      
+      // Initialize subscription for new user
+      if (event === 'SIGNED_IN' && session?.user) {
+        initializeSubscription.mutate(session.user.id);
+      }
+      
       setLoading(false);
     });
 
@@ -73,6 +87,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         console.log('Profile created successfully during signup');
       }
+      
+      // Initialize subscription and credits
+      initializeSubscription.mutate(data.user.id);
     }
 
     return { error };
