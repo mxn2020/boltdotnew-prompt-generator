@@ -1,7 +1,7 @@
 import React from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Layout } from '../components/layout/Layout';
-import { Save, Download, Plus, AlertCircle, History, FileText, MessageSquare, Info, Code, FileCheck, User, BookOpen, Shield, Lightbulb } from 'lucide-react';
+import { Save, Download, Plus, AlertCircle, History, FileText, MessageSquare, Info, Code, FileCheck, User, BookOpen, Shield, Lightbulb, FolderOpen } from 'lucide-react';
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from '../contexts/AuthContext';
 import { ensureUserProfile } from '../lib/profile';
@@ -12,6 +12,7 @@ import { useVersions, useCreateVersion, useRestoreVersion } from '../hooks/useVe
 import { PromptEditor as PromptEditorComponent } from '../components/prompt/PromptEditor';
 import { VersionHistory } from '../components/version/VersionHistory';
 import { DiffViewer } from '../components/version/DiffViewer';
+import { PromptCollectionsPanel } from '../components/prompt/PromptCollectionsPanel';
 import { ExportDialog } from '../components/export/ExportDialog';
 import { VersionDiffer } from '../lib/version/differ';
 import type { StructureType, Complexity, Prompt, PromptType } from '../types/prompt';
@@ -53,6 +54,7 @@ export function PromptEditor() {
   const [showVersionHistory, setShowVersionHistory] = React.useState(false);
   const [showExportDialog, setShowExportDialog] = React.useState(false);
   const [versionComparison, setVersionComparison] = React.useState<VersionComparison | null>(null);
+  const [showCollectionsPanel, setShowCollectionsPanel] = React.useState(false);
   const [showAssetTypeSelector, setShowAssetTypeSelector] = React.useState(isAsset);
   const [selectedAssetType, setSelectedAssetType] = React.useState<PromptType>('prompt');
   const [saveError, setSaveError] = React.useState<string | null>(null);
@@ -319,6 +321,15 @@ export function PromptEditor() {
              </Button>
              <Button 
                variant="outline" 
+               onClick={() => setShowCollectionsPanel(!showCollectionsPanel)}
+               disabled={!currentPrompt?.id}
+               size="sm"
+             >
+               <FolderOpen className="w-4 h-4 mr-2" />
+               <span className="hidden sm:inline">Collections</span>
+             </Button>
+             <Button 
+               variant="outline" 
                onClick={() => setShowExportDialog(true)}
                disabled={!currentPrompt}
                size="sm"
@@ -338,6 +349,17 @@ export function PromptEditor() {
            </div>
          </div>
        </div>
+
+       {/* Collections Panel */}
+       {showCollectionsPanel && currentPrompt?.id && (
+         <div className="mb-6 flex justify-end">
+           <PromptCollectionsPanel
+             promptId={currentPrompt.id}
+             isOpen={true}
+             onToggle={() => setShowCollectionsPanel(false)}
+           />
+         </div>
+       )}
 
        {/* Asset Type Selector Modal */}
        <Dialog open={showAssetTypeSelector} onOpenChange={setShowAssetTypeSelector}>

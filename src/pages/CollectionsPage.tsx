@@ -17,7 +17,7 @@ import {
 import { 
   useCollections, 
   useCreateCollection, 
-  useDeleteCollection, 
+  useDeleteCollection,
   useUpdateCollection,
   useCollection,
   useAddToCollection,
@@ -122,15 +122,20 @@ export function CollectionsPage() {
   const handleAddPromptToCollection = async (promptId: string) => {
     if (!selectedCollection) return;
     
-    try {
-      await addToCollection.mutateAsync({
-        collectionId: selectedCollection,
-        itemType: 'prompt',
-        promptId,
-      });
-    } catch (error) {
-      console.error('Failed to add prompt to collection:', error);
-    }
+    addToCollection.mutate({
+      collectionId: selectedCollection,
+      itemType: 'prompt',
+      promptId,
+    }, {
+      onError: (error) => {
+        console.error('Failed to add prompt to collection:', error);
+        alert('Failed to add prompt to collection. Please try again.');
+      },
+      onSuccess: () => {
+        // Show success message or update UI
+        console.log('Prompt added to collection successfully');
+      }
+    });
   };
 
   const filteredCollections = collections?.filter(collection =>
