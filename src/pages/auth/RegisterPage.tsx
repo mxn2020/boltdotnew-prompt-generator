@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { Zap, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Logo } from '../../components/Logo';
 
 export function RegisterPage() {
   const [fullName, setFullName] = useState('');
@@ -47,7 +48,7 @@ export function RegisterPage() {
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <Link to="/" className="flex items-center justify-center space-x-2 mb-6">
-            <Zap className="w-8 h-8 text-indigo-600" />
+            <Logo size="lg" />
             <span className="text-2xl font-bold text-gray-900">PromptVerse</span>
           </Link>
           <h2 className="text-3xl font-bold text-gray-900">Create your account</h2>

@@ -1,7 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { 
-  Zap, 
   Brain, 
   Users, 
   GitBranch, 
@@ -14,6 +13,7 @@ import { BoltBadge } from '../components/BoltBadge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Logo } from '@/components/Logo';
 import { Layout } from '@/components/layout/Layout';
 
 const features = [
@@ -67,6 +67,9 @@ export function LandingPage() {
            </div>
            
            <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold mb-6">
+             <div className="flex justify-center items-center gap-4 mb-4">
+               <Logo size="xl" className="w-20 h-20" />
+             </div>
              Professional Prompt
              <span className="text-primary"> Engineering</span>
              <br className="hidden sm:block" />

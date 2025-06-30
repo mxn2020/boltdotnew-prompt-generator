@@ -14,6 +14,7 @@ import {
   Menu
 } from 'lucide-react';
 import { BoltBadge } from '../BoltBadge';
+import { Logo } from '../Logo';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -54,7 +55,7 @@ export function Header() {
         <div className="flex items-center space-x-8">
           <div className="flex items-center">
             <Link to="/" className="flex items-center space-x-2">
-              <Zap className="h-8 w-8 text-primary" />
+              <Logo size="md" />
               <span className="text-xl font-bold">PromptVerse</span>
             </Link>
           </div>
