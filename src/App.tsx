@@ -96,7 +96,10 @@ function App() {
             } />
             
             {/* Catch all route */}
-                <SettingsPage />
+            <Route path="*" element={<SettingsPage />} />
+          </Routes>
+        </Router>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
