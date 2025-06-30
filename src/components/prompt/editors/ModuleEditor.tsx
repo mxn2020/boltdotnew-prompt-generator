@@ -2,6 +2,14 @@ import React from 'react';
 import { Plus, GripVertical, X, Settings } from 'lucide-react';
 import { usePromptStore } from '../../../stores/promptStore';
 import type { PromptModule } from '../../../types/prompt';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export function ModuleEditor() {
   const { 
@@ -29,37 +37,36 @@ export function ModuleEditor() {
     <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900">Modulized Prompt Components</h3>
-          <p className="text-sm text-gray-600">
+        <div className="space-y-1">
+          <h3 className="text-2xl font-bold tracking-tight">Modulized Prompt Components</h3>
+          <p className="text-muted-foreground">
             Build reusable modules with processing wrappers for advanced prompt composition.
           </p>
         </div>
-        <button
-          onClick={handleAddModule}
-          className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Add Module</span>
-        </button>
+        <Button onClick={handleAddModule} className="gap-2">
+          <Plus className="h-4 w-4" />
+          Add Module
+        </Button>
       </div>
 
       {/* Modules */}
       <div className="space-y-4">
         {modules.length === 0 ? (
-          <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-            <h4 className="text-lg font-medium text-gray-900 mb-2">No modules yet</h4>
-            <p className="text-gray-600 mb-4">
-              Create reusable modules that can be combined and processed with wrappers.
-            </p>
-            <button
-              onClick={handleAddModule}
-              className="inline-flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Add First Module</span>
-            </button>
-          </div>
+          <Card className="border-dashed">
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <div className="h-12 w-12 rounded-lg bg-purple-100 flex items-center justify-center mb-4">
+                <Settings className="h-6 w-6 text-purple-600" />
+              </div>
+              <h4 className="text-lg font-semibold mb-2">No modules yet</h4>
+              <p className="text-muted-foreground mb-4 text-center max-w-md">
+                Create reusable modules that can be combined and processed with wrappers.
+              </p>
+              <Button onClick={handleAddModule} className="gap-2">
+                <Plus className="h-4 w-4" />
+                Add First Module
+              </Button>
+            </CardContent>
+          </Card>
         ) : (
           modules.map((module, index) => (
             <ModuleItem
@@ -74,15 +81,18 @@ export function ModuleEditor() {
 
       {/* Tips */}
       {modules.length > 0 && (
-        <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-          <h4 className="text-sm font-medium text-purple-900 mb-2">💡 Tips for Modulized Prompts</h4>
-          <ul className="text-sm text-purple-800 space-y-1">
-            <li>• Design modules to be reusable across different prompts</li>
-            <li>• Use wrappers to define how modules should be processed</li>
-            <li>• Consider creating modules for common patterns like examples, constraints, or formatting</li>
-            <li>• Modules can be saved to your library for use in other prompts</li>
-          </ul>
-        </div>
+        <Alert className="border-purple-200 bg-purple-50">
+          <Settings className="h-4 w-4" />
+          <AlertDescription className="text-purple-800">
+            <div className="font-medium mb-2">💡 Tips for Modulized Prompts</div>
+            <ul className="space-y-1 text-sm">
+              <li>• Design modules to be reusable across different prompts</li>
+              <li>• Use wrappers to define how modules should be processed</li>
+              <li>• Consider creating modules for common patterns like examples, constraints, or formatting</li>
+              <li>• Modules can be saved to your library for use in other prompts</li>
+            </ul>
+          </AlertDescription>
+        </Alert>
       )}
     </div>
   );
@@ -98,110 +108,116 @@ function ModuleItem({ module, onUpdate, onRemove }: ModuleItemProps) {
   const [showConfig, setShowConfig] = React.useState(false);
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+    <Card className="border-purple-200 shadow-sm">
       {/* Module Header */}
-      <div className="flex items-center space-x-3 p-4 bg-purple-50 border-b border-gray-200">
-        <button className="text-gray-400 hover:text-gray-600 cursor-grab">
-          <GripVertical className="w-4 h-4" />
-        </button>
+      <CardHeader className="bg-purple-50/50 border-b border-purple-200 pb-4">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="sm" className="cursor-grab p-1">
+            <GripVertical className="h-4 w-4 text-muted-foreground" />
+          </Button>
 
-        <input
-          type="text"
-          value={module.title}
-          onChange={(e) => onUpdate(module.id, 'title', e.target.value)}
-          placeholder="Module title..."
-          className="flex-1 px-3 py-1 border border-gray-300 rounded-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500"
-        />
+          <Input
+            value={module.title}
+            onChange={(e) => onUpdate(module.id, 'title', e.target.value)}
+            placeholder="Module title..."
+            className="flex-1 h-8 font-medium border-0 bg-transparent focus-visible:ring-1 focus-visible:ring-purple-500"
+          />
 
-        <button
-          onClick={() => setShowConfig(!showConfig)}
-          className="text-gray-600 hover:text-purple-600 transition-colors"
-        >
-          <Settings className="w-4 h-4" />
-        </button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowConfig(!showConfig)}
+            className="p-1"
+          >
+            <Settings className="h-4 w-4" />
+          </Button>
 
-        <button
-          onClick={onRemove}
-          className="text-gray-400 hover:text-red-600 transition-colors"
-        >
-          <X className="w-4 h-4" />
-        </button>
-      </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onRemove}
+            className="p-1 text-muted-foreground hover:text-destructive"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      </CardHeader>
 
       {/* Module Content */}
-      <div className="p-4 space-y-4">
-        {/* Description */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Description
-          </label>
-          <input
-            type="text"
-            value={module.description || ''}
-            onChange={(e) => onUpdate(module.id, 'description', e.target.value)}
-            placeholder="Brief description of this module..."
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-          />
-        </div>
-
-        {/* Content */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Module Content
-          </label>
-          <textarea
-            value={module.content}
-            onChange={(e) => onUpdate(module.id, 'content', e.target.value)}
-            placeholder="Enter module content..."
-            className="w-full h-32 p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-purple-500"
-          />
-          <div className="flex justify-end mt-1">
-            <span className="text-xs text-gray-500">
-              {module.content.length} characters
-            </span>
-          </div>
-        </div>
-
-        {/* Wrapper Selection */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Processing Wrapper
-          </label>
-          <select
-            value={module.wrapper_id || ''}
-            onChange={(e) => onUpdate(module.id, 'wrapper_id', e.target.value || undefined)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-          >
-            <option value="">No wrapper</option>
-            <option value="format-json">Format as JSON</option>
-            <option value="format-list">Format as List</option>
-            <option value="validate-input">Validate Input</option>
-            <option value="custom">Custom Wrapper</option>
-          </select>
-        </div>
-
-        {/* Configuration */}
-        {showConfig && (
-          <div className="border-t border-gray-200 pt-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Module Configuration (JSON)
-            </label>
-            <textarea
-              value={JSON.stringify(module.config || {}, null, 2)}
-              onChange={(e) => {
-                try {
-                  const config = JSON.parse(e.target.value);
-                  onUpdate(module.id, 'config', config);
-                } catch {
-                  // Invalid JSON, don't update
-                }
-              }}
-              placeholder='{"key": "value"}'
-              className="w-full h-24 p-3 border border-gray-300 rounded-lg resize-none font-mono text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+      <CardContent className="pt-6">
+        <div className="space-y-4">
+          {/* Description */}
+          <div className="space-y-2">
+            <Label htmlFor={`desc-${module.id}`}>Description</Label>
+            <Input
+              id={`desc-${module.id}`}
+              value={module.description || ''}
+              onChange={(e) => onUpdate(module.id, 'description', e.target.value)}
+              placeholder="Brief description of this module..."
             />
           </div>
-        )}
-      </div>
-    </div>
+
+          {/* Content */}
+          <div className="space-y-2">
+            <Label htmlFor={`content-${module.id}`}>Module Content</Label>
+            <Textarea
+              id={`content-${module.id}`}
+              value={module.content}
+              onChange={(e) => onUpdate(module.id, 'content', e.target.value)}
+              placeholder="Enter module content..."
+              className="min-h-[120px] resize-none"
+            />
+            <div className="flex justify-end">
+              <span className="text-xs text-muted-foreground">
+                {module.content.length} characters
+              </span>
+            </div>
+          </div>
+
+          {/* Wrapper Selection */}
+          <div className="space-y-2">
+            <Label htmlFor={`wrapper-${module.id}`}>Processing Wrapper</Label>
+            <Select
+              value={module.wrapper_id || ''}
+              onValueChange={(value) => onUpdate(module.id, 'wrapper_id', value || undefined)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="No wrapper" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">No wrapper</SelectItem>
+                <SelectItem value="format-json">Format as JSON</SelectItem>
+                <SelectItem value="format-list">Format as List</SelectItem>
+                <SelectItem value="validate-input">Validate Input</SelectItem>
+                <SelectItem value="custom">Custom Wrapper</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Configuration */}
+          <Collapsible open={showConfig} onOpenChange={setShowConfig}>
+            <CollapsibleContent className="space-y-2">
+              <div className="border-t pt-4">
+                <Label htmlFor={`config-${module.id}`}>Module Configuration (JSON)</Label>
+                <Textarea
+                  id={`config-${module.id}`}
+                  value={JSON.stringify(module.config || {}, null, 2)}
+                  onChange={(e) => {
+                    try {
+                      const config = JSON.parse(e.target.value);
+                      onUpdate(module.id, 'config', config);
+                    } catch {
+                      // Invalid JSON, don't update
+                    }
+                  }}
+                  placeholder='{"key": "value"}'
+                  className="min-h-[100px] font-mono text-sm resize-none"
+                />
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

@@ -3,7 +3,6 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './contexts/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
-import { Layout } from './components/layout/Layout';
 import { OnboardingFlow } from './components/onboarding/OnboardingFlow';
 import { useOnboardingProgress } from './hooks/usePayment';
 import { useAuth } from './contexts/AuthContext';
@@ -50,12 +49,12 @@ function AppContent() {
   return (
     <>
       <Routes>
-        {/* Public Routes */}
-        <Route path="/" element={<Layout showSidebar={false}><LandingPage /></Layout>} />
+        {/* Public Routes - No Layout needed, handled in components */}
+        <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         
-        {/* Protected Routes */}
+        {/* Protected Routes - Layout handled by individual components */}
         <Route path="/studio" element={
           <ProtectedRoute>
             <PromptStudio />
@@ -93,9 +92,9 @@ function AppContent() {
         } />
         <Route path="/analytics" element={
           <ProtectedRoute>
-            <div className="p-8 text-center">
+            <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
               <h1 className="text-2xl font-bold">Analytics</h1>
-              <p className="text-gray-600 mt-2">Coming in Step 6</p>
+              <p className="text-muted-foreground mt-2">Coming in Step 6</p>
             </div>
           </ProtectedRoute>
         } />
@@ -106,9 +105,9 @@ function AppContent() {
         } />
         <Route path="/docs" element={
           <ProtectedRoute>
-            <div className="p-8 text-center">
+            <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
               <h1 className="text-2xl font-bold">Documentation</h1>
-              <p className="text-gray-600 mt-2">Coming in Step 6</p>
+              <p className="text-muted-foreground mt-2">Coming in Step 6</p>
             </div>
           </ProtectedRoute>
         } />
@@ -137,6 +136,7 @@ function AppContent() {
     </>
   );
 }
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>

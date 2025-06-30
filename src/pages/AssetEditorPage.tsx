@@ -14,6 +14,16 @@ import { usePromptStore } from '../stores/promptStore';
 import { PromptEditor as PromptEditorComponent } from '../components/prompt/PromptEditor';
 import { cn } from '../lib/utils';
 import type { Prompt, PromptType, AssetFieldDefinition } from '../types/prompt';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function AssetEditorPage() {
   const { id } = useParams<{ id: string }>();
@@ -73,10 +83,10 @@ export function AssetEditorPage() {
   if (isLoading) {
     return (
       <Layout>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="animate-pulse space-y-6">
-            <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-            <div className="h-64 bg-gray-200 rounded"></div>
+        <div className="container mx-auto px-4 py-8">
+          <div className="space-y-6">
+            <Skeleton className="h-8 w-1/4" />
+            <Skeleton className="h-64 w-full" />
           </div>
         </div>
       </Layout>
@@ -86,14 +96,11 @@ export function AssetEditorPage() {
   if (!asset || !currentPrompt) {
     return (
       <Layout>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
-          <h1 className="text-2xl font-bold text-gray-900">Asset not found</h1>
-          <button
-            onClick={() => navigate('/explorer')}
-            className="mt-4 text-indigo-600 hover:text-indigo-700"
-          >
+        <div className="container mx-auto px-4 py-8 text-center">
+          <h1 className="text-2xl font-bold mb-4">Asset not found</h1>
+          <Button onClick={() => navigate('/explorer')} variant="outline">
             Return to Explorer
-          </button>
+          </Button>
         </div>
       </Layout>
     );
@@ -115,65 +122,60 @@ export function AssetEditorPage() {
 
   return (
     <Layout>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="container mx-auto px-4">
         {/* Header */}
         <div className="mb-8">
           {/* Error Display */}
           {saveError && (
-            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-              <div className="flex items-center">
-                <AlertCircle className="w-5 h-5 text-red-600 mr-2" />
-                <p className="text-red-800">{saveError}</p>
-                <button
+            <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription className="flex items-center justify-between">
+                {saveError}
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => setSaveError(null)}
-                  className="ml-auto text-red-600 hover:text-red-800"
                 >
-                  ×
-                </button>
-              </div>
-            </div>
+                  <X className="h-3 w-3" />
+                </Button>
+              </AlertDescription>
+            </Alert>
           )}
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => navigate('/explorer')}
-                className="flex items-center space-x-2 text-gray-600 hover:text-gray-800 transition-colors"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                <span>Back to Explorer</span>
-              </button>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              <Button variant="ghost" onClick={() => navigate('/explorer')} className="p-2">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">Back to Explorer</span>
+                <span className="sm:hidden">Back</span>
+              </Button>
               
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center gap-3">
                 <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
                   <FileText className="w-4 h-4 text-orange-600" />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-900">Asset Editor</h1>
-                  <p className="text-gray-600">
+                  <h1 className="text-xl sm:text-2xl font-bold">Asset Editor</h1>
+                  <Badge variant="secondary" className="mt-1">
                     {getAssetTypeLabel(currentPrompt.prompt_type!)}
-                  </p>
+                  </Badge>
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center space-x-3">
-              <button 
-                onClick={handleSave}
-                disabled={!hasUnsavedChanges || updateAsset.isPending}
-                className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Save className="w-4 h-4" />
-                <span>
-                  {updateAsset.isPending ? 'Saving...' : 'Save Asset'}
-                </span>
-              </button>
-            </div>
+            <Button 
+              onClick={handleSave}
+              disabled={!hasUnsavedChanges || updateAsset.isPending}
+              className="w-full sm:w-auto"
+            >
+              <Save className="w-4 h-4 mr-2" />
+              {updateAsset.isPending ? 'Saving...' : 'Save Asset'}
+            </Button>
           </div>
         </div>
 
         {/* Editor Interface */}
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
           {/* Left Panel - Asset Details & Custom Fields */}
           <div className="xl:col-span-1 space-y-6">
             <AssetDetailsPanel
@@ -193,20 +195,20 @@ export function AssetEditorPage() {
 
           {/* Center Panel - Content Editor */}
           <div className="xl:col-span-2">
-            <div className="bg-white rounded-xl border border-gray-200 h-full min-h-[600px]">
-              <div className="p-4 border-b border-gray-200 bg-orange-50">
-                <div className="flex items-center space-x-2">
+            <Card className="h-full min-h-[600px]">
+              <CardHeader className="bg-orange-50">
+                <CardTitle className="flex items-center gap-2 text-orange-900">
                   <FileText className="w-5 h-5 text-orange-600" />
-                  <span className="font-medium text-orange-900">
-                    Asset Content Editor
-                  </span>
-                  <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded-full text-xs">
+                  Asset Content Editor
+                  <Badge variant="outline" className="text-orange-700 border-orange-200">
                     {getAssetTypeLabel(currentPrompt.prompt_type!)}
-                  </span>
-                </div>
-              </div>
-              <PromptEditorComponent />
-            </div>
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                <PromptEditorComponent />
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
@@ -221,114 +223,107 @@ interface AssetDetailsPanelProps {
 
 function AssetDetailsPanel({ asset, onUpdate }: AssetDetailsPanelProps) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">Asset Details</h3>
-      
-      <div className="space-y-4">
+    <Card>
+      <CardHeader>
+        <CardTitle>Asset Details</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
         {/* Asset Title */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Title
-          </label>
-          <input
-            type="text"
+        <div className="space-y-2">
+          <Label htmlFor="title">Title</Label>
+          <Input
+            id="title"
             value={asset.title || ''}
             onChange={(e) => onUpdate('title', e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
             placeholder="Enter asset title..."
           />
         </div>
 
         {/* Description */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Description
-          </label>
-          <textarea
+        <div className="space-y-2">
+          <Label htmlFor="description">Description</Label>
+          <Textarea
+            id="description"
             value={asset.description || ''}
             onChange={(e) => onUpdate('description', e.target.value)}
-            className="w-full h-20 p-2 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-orange-500"
             placeholder="Brief description of your asset..."
+            className="min-h-[80px]"
           />
         </div>
 
         {/* Asset Type (Read-only) */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Asset Type
-          </label>
-          <div className="w-full p-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-600">
-            {asset.prompt_type?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-          </div>
+        <div className="space-y-2">
+          <Label>Asset Type</Label>
+          <Input
+            value={asset.prompt_type?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+            disabled
+            className="bg-muted"
+          />
         </div>
 
         {/* Category */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Category
-          </label>
-          <select 
-            value={asset.category || 'general'}
-            onChange={(e) => onUpdate('category', e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-          >
-            <option value="general">General</option>
-            <option value="ai">AI Assistant</option>
-            <option value="web">Web Development</option>
-            <option value="data">Data Analysis</option>
-            <option value="creative">Creative Writing</option>
-            <option value="business">Business</option>
-            <option value="research">Research</option>
-          </select>
+        <div className="space-y-2">
+          <Label>Category</Label>
+          <Select value={asset.category || 'general'} onValueChange={(value) => onUpdate('category', value)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="general">General</SelectItem>
+              <SelectItem value="ai">AI Assistant</SelectItem>
+              <SelectItem value="web">Web Development</SelectItem>
+              <SelectItem value="data">Data Analysis</SelectItem>
+              <SelectItem value="creative">Creative Writing</SelectItem>
+              <SelectItem value="business">Business</SelectItem>
+              <SelectItem value="research">Research</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Complexity */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Complexity
-          </label>
-          <select 
-            value={asset.complexity || 'simple'}
-            onChange={(e) => onUpdate('complexity', e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-          >
-            <option value="simple">Simple</option>
-            <option value="medium">Medium</option>
-            <option value="complex">Complex</option>
-          </select>
+        <div className="space-y-2">
+          <Label>Complexity</Label>
+          <Select value={asset.complexity || 'simple'} onValueChange={(value) => onUpdate('complexity', value)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="simple">Simple</SelectItem>
+              <SelectItem value="medium">Medium</SelectItem>
+              <SelectItem value="complex">Complex</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Tags */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Tags
-          </label>
-          <input
-            type="text"
+        <div className="space-y-2">
+          <Label htmlFor="tags">Tags</Label>
+          <Input
+            id="tags"
             value={(asset.tags || []).join(', ')}
             onChange={(e) => onUpdate('tags', e.target.value.split(',').map(tag => tag.trim()).filter(Boolean))}
-            className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
             placeholder="Enter tags separated by commas..."
           />
         </div>
 
         {/* Privacy Setting */}
-        <div>
-          <label className="flex items-center space-x-3">
-            <input
-              type="checkbox"
-              checked={asset.is_public || false}
-              onChange={(e) => onUpdate('is_public', e.target.checked)}
-              className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
-            />
-            <div>
-              <div className="font-medium text-gray-900">Make Public</div>
-              <div className="text-sm text-gray-600">Allow others to discover and use this asset</div>
-            </div>
-          </label>
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="public"
+            checked={asset.is_public || false}
+            onCheckedChange={(checked) => onUpdate('is_public', checked)}
+          />
+          <div className="grid gap-1.5 leading-none">
+            <Label htmlFor="public" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+              Make Public
+            </Label>
+            <p className="text-xs text-muted-foreground">
+              Allow others to discover and use this asset
+            </p>
+          </div>
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -353,11 +348,10 @@ function AssetCustomFieldsPanel({
       case 'url':
       case 'email':
         return (
-          <input
+          <Input
             type={field.field_type}
             value={value}
             onChange={(e) => onUpdate(field.field_name, e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
             placeholder={field.field_description}
             required={field.is_required}
           />
@@ -365,22 +359,21 @@ function AssetCustomFieldsPanel({
 
       case 'textarea':
         return (
-          <textarea
+          <Textarea
             value={value}
             onChange={(e) => onUpdate(field.field_name, e.target.value)}
-            className="w-full h-20 p-2 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-orange-500"
             placeholder={field.field_description}
             required={field.is_required}
+            className="min-h-[80px]"
           />
         );
 
       case 'number':
         return (
-          <input
+          <Input
             type="number"
             value={value}
             onChange={(e) => onUpdate(field.field_name, parseInt(e.target.value) || 0)}
-            className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
             placeholder={field.field_description}
             required={field.is_required}
           />
@@ -388,67 +381,65 @@ function AssetCustomFieldsPanel({
 
       case 'boolean':
         return (
-          <label className="flex items-center space-x-2">
-            <input
-              type="checkbox"
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id={field.field_name}
               checked={!!value}
-              onChange={(e) => onUpdate(field.field_name, e.target.checked)}
-              className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+              onCheckedChange={(checked) => onUpdate(field.field_name, checked)}
             />
-            <span className="text-sm text-gray-700">{field.field_description}</span>
-          </label>
+            <Label htmlFor={field.field_name} className="text-sm">
+              {field.field_description}
+            </Label>
+          </div>
         );
 
       case 'select':
         return (
-          <select
-            value={value}
-            onChange={(e) => onUpdate(field.field_name, e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-            required={field.is_required}
-          >
-            <option value="">Select an option...</option>
-            {field.field_options?.map((option) => (
-              <option key={option} value={option}>
-                {option.charAt(0).toUpperCase() + option.slice(1)}
-              </option>
-            ))}
-          </select>
+          <Select value={value} onValueChange={(value) => onUpdate(field.field_name, value)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select an option..." />
+            </SelectTrigger>
+            <SelectContent>
+              {field.field_options?.map((option) => (
+                <SelectItem key={option} value={option}>
+                  {option.charAt(0).toUpperCase() + option.slice(1)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         );
 
       case 'multiselect':
         return (
           <div className="space-y-2">
             {field.field_options?.map((option) => (
-              <label key={option} className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
+              <div key={option} className="flex items-center space-x-2">
+                <Checkbox
+                  id={`${field.field_name}-${option}`}
                   checked={(value || []).includes(option)}
-                  onChange={(e) => {
+                  onCheckedChange={(checked) => {
                     const currentValues = value || [];
-                    if (e.target.checked) {
+                    if (checked) {
                       onUpdate(field.field_name, [...currentValues, option]);
                     } else {
                       onUpdate(field.field_name, currentValues.filter((v: string) => v !== option));
                     }
                   }}
-                  className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
                 />
-                <span className="text-sm text-gray-700">
+                <Label htmlFor={`${field.field_name}-${option}`} className="text-sm">
                   {option.charAt(0).toUpperCase() + option.slice(1)}
-                </span>
-              </label>
+                </Label>
+              </div>
             ))}
           </div>
         );
 
       case 'date':
         return (
-          <input
+          <Input
             type="date"
             value={value}
             onChange={(e) => onUpdate(field.field_name, e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
             required={field.is_required}
           />
         );
@@ -459,25 +450,26 @@ function AssetCustomFieldsPanel({
   };
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">
-        {assetType.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())} Fields
-      </h3>
-      
-      <div className="space-y-4">
+    <Card>
+      <CardHeader>
+        <CardTitle>
+          {assetType.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())} Fields
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
         {fieldDefinitions.map((field) => (
-          <div key={field.field_name}>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+          <div key={field.field_name} className="space-y-2">
+            <Label>
               {field.field_label}
-              {field.is_required && <span className="text-red-500 ml-1">*</span>}
-            </label>
+              {field.is_required && <span className="text-destructive ml-1">*</span>}
+            </Label>
             {renderField(field)}
             {field.field_description && (
-              <p className="text-xs text-gray-500 mt-1">{field.field_description}</p>
+              <p className="text-xs text-muted-foreground">{field.field_description}</p>
             )}
           </div>
         ))}
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

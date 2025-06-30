@@ -19,6 +19,16 @@ import {
 import { useUpdateComponent } from '../hooks/useComponents';
 import { cn } from '../lib/utils';
 import type { Component, ComponentType, ComponentContent } from '../types/component';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function ComponentEditorPage() {
   const { id } = useParams<{ id: string }>();
@@ -90,10 +100,10 @@ export function ComponentEditorPage() {
   if (isLoading) {
     return (
       <Layout>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="animate-pulse space-y-6">
-            <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-            <div className="h-64 bg-gray-200 rounded"></div>
+        <div className="container mx-auto px-4 py-8">
+          <div className="space-y-6">
+            <Skeleton className="h-8 w-1/4" />
+            <Skeleton className="h-64 w-full" />
           </div>
         </div>
       </Layout>
@@ -103,14 +113,11 @@ export function ComponentEditorPage() {
   if (!component || !componentData) {
     return (
       <Layout>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
-          <h1 className="text-2xl font-bold text-gray-900">Component not found</h1>
-          <button
-            onClick={() => navigate('/library')}
-            className="mt-4 text-indigo-600 hover:text-indigo-700"
-          >
+        <div className="container mx-auto px-4 py-8 text-center">
+          <h1 className="text-2xl font-bold mb-4">Component not found</h1>
+          <Button onClick={() => navigate('/library')} variant="outline">
             Return to Library
-          </button>
+          </Button>
         </div>
       </Layout>
     );
@@ -135,65 +142,51 @@ export function ComponentEditorPage() {
 
   return (
     <Layout>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="container mx-auto px-4">
         {/* Header */}
         <div className="mb-8">
           {/* Error Display */}
           {saveError && (
-            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-              <div className="flex items-center">
-                <AlertCircle className="w-5 h-5 text-red-600 mr-2" />
-                <p className="text-red-800">{saveError}</p>
-                <button
-                  onClick={() => setSaveError(null)}
-                  className="ml-auto text-red-600 hover:text-red-800"
-                >
-                  ×
-                </button>
-              </div>
-            </div>
+            <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{saveError}</AlertDescription>
+            </Alert>
           )}
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => navigate('/library')}
-                className="flex items-center space-x-2 text-gray-600 hover:text-gray-800 transition-colors"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                <span>Back to Library</span>
-              </button>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              <Button variant="ghost" onClick={() => navigate('/library')} className="p-2">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                <span className="hidden sm:inline">Back to Library</span>
+                <span className="sm:hidden">Back</span>
+              </Button>
               
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
-                  <Icon className="w-4 h-4 text-indigo-600" />
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                  <Icon className="w-4 h-4 text-primary" />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-900">Component Editor</h1>
-                  <p className="text-gray-600">
-                    Editing {componentData.type} component
-                  </p>
+                  <h1 className="text-xl sm:text-2xl font-bold">Component Editor</h1>
+                  <Badge variant="secondary" className="mt-1">
+                    {componentData.type} component
+                  </Badge>
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center space-x-3">
-              <button 
-                onClick={handleSave}
-                disabled={!hasUnsavedChanges || updateComponent.isPending}
-                className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Save className="w-4 h-4" />
-                <span>
-                  {updateComponent.isPending ? 'Saving...' : 'Save Component'}
-                </span>
-              </button>
-            </div>
+            <Button 
+              onClick={handleSave}
+              disabled={!hasUnsavedChanges || updateComponent.isPending}
+              className="w-full sm:w-auto"
+            >
+              <Save className="w-4 h-4 mr-2" />
+              {updateComponent.isPending ? 'Saving...' : 'Save Component'}
+            </Button>
           </div>
         </div>
 
         {/* Editor Interface */}
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
           {/* Left Panel - Component Details */}
           <div className="xl:col-span-1 space-y-6">
             <ComponentDetailsPanel
@@ -222,87 +215,81 @@ interface ComponentDetailsPanelProps {
 
 function ComponentDetailsPanel({ component, onUpdate }: ComponentDetailsPanelProps) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">Component Details</h3>
-      
-      <div className="space-y-4">
+    <Card>
+      <CardHeader>
+        <CardTitle>Component Details</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
         {/* Component Title */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Title
-          </label>
-          <input
-            type="text"
+        <div className="space-y-2">
+          <Label htmlFor="title">Title</Label>
+          <Input
+            id="title"
             value={component.title || ''}
             onChange={(e) => onUpdate('title', e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
             placeholder="Enter component title..."
           />
         </div>
 
         {/* Description */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Description
-          </label>
-          <textarea
+        <div className="space-y-2">
+          <Label htmlFor="description">Description</Label>
+          <Textarea
+            id="description"
             value={component.description || ''}
             onChange={(e) => onUpdate('description', e.target.value)}
-            className="w-full h-20 p-2 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500"
             placeholder="Brief description of your component..."
+            className="min-h-[80px]"
           />
         </div>
 
         {/* Category */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Category
-          </label>
-          <select 
-            value={component.category || 'general'}
-            onChange={(e) => onUpdate('category', e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          >
-            <option value="general">General</option>
-            <option value="formatting">Formatting</option>
-            <option value="development">Development</option>
-            <option value="analysis">Analysis</option>
-            <option value="creative">Creative</option>
-            <option value="business">Business</option>
-          </select>
+        <div className="space-y-2">
+          <Label>Category</Label>
+          <Select value={component.category || 'general'} onValueChange={(value) => onUpdate('category', value)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="general">General</SelectItem>
+              <SelectItem value="formatting">Formatting</SelectItem>
+              <SelectItem value="development">Development</SelectItem>
+              <SelectItem value="analysis">Analysis</SelectItem>
+              <SelectItem value="creative">Creative</SelectItem>
+              <SelectItem value="business">Business</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Tags */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Tags
-          </label>
-          <input
-            type="text"
+        <div className="space-y-2">
+          <Label htmlFor="tags">Tags</Label>
+          <Input
+            id="tags"
             value={(component.tags || []).join(', ')}
             onChange={(e) => onUpdate('tags', e.target.value.split(',').map(tag => tag.trim()).filter(Boolean))}
-            className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
             placeholder="Enter tags separated by commas..."
           />
         </div>
 
         {/* Privacy Setting */}
-        <div>
-          <label className="flex items-center space-x-3">
-            <input
-              type="checkbox"
-              checked={component.is_public || false}
-              onChange={(e) => onUpdate('is_public', e.target.checked)}
-              className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-            />
-            <div>
-              <div className="font-medium text-gray-900">Make Public</div>
-              <div className="text-sm text-gray-600">Allow others to discover and use this component</div>
-            </div>
-          </label>
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="public"
+            checked={component.is_public || false}
+            onCheckedChange={(checked) => onUpdate('is_public', checked)}
+          />
+          <div className="grid gap-1.5 leading-none">
+            <Label htmlFor="public" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+              Make Public
+            </Label>
+            <p className="text-xs text-muted-foreground">
+              Allow others to discover and use this component
+            </p>
+          </div>
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -334,39 +321,35 @@ function ComponentContentEditor({ component, onUpdateContent }: ComponentContent
   };
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 h-full min-h-[600px]">
-      <div className="p-6 border-b border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900">
+    <Card className="h-full min-h-[600px]">
+      <CardHeader>
+        <CardTitle>
           {component.type?.charAt(0).toUpperCase()}{component.type?.slice(1)} Content
-        </h3>
-      </div>
-      <div className="p-6">
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
         {renderEditor()}
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }
 
 function ModuleContentEditor({ content, onUpdate }: { content: any; onUpdate: (field: string, value: any) => void }) {
   return (
     <div className="space-y-6">
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Module Content
-        </label>
-        <textarea
+      <div className="space-y-2">
+        <Label>Module Content</Label>
+        <Textarea
           value={content.moduleContent || ''}
           onChange={(e) => onUpdate('moduleContent', e.target.value)}
-          className="w-full h-64 p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500"
           placeholder="Enter your module content here..."
+          className="min-h-[200px] font-mono"
         />
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Module Configuration (JSON)
-        </label>
-        <textarea
+      <div className="space-y-2">
+        <Label>Module Configuration (JSON)</Label>
+        <Textarea
           value={JSON.stringify(content.moduleConfig || {}, null, 2)}
           onChange={(e) => {
             try {
@@ -376,8 +359,8 @@ function ModuleContentEditor({ content, onUpdate }: { content: any; onUpdate: (f
               // Invalid JSON, don't update
             }
           }}
-          className="w-full h-32 p-3 border border-gray-300 rounded-lg resize-none font-mono text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
           placeholder='{"key": "value"}'
+          className="min-h-[120px] font-mono text-sm"
         />
       </div>
     </div>
@@ -387,42 +370,37 @@ function ModuleContentEditor({ content, onUpdate }: { content: any; onUpdate: (f
 function WrapperContentEditor({ content, onUpdate }: { content: any; onUpdate: (field: string, value: any) => void }) {
   return (
     <div className="space-y-6">
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Wrapper Type
-        </label>
-        <select
-          value={content.wrapperType || 'custom'}
-          onChange={(e) => onUpdate('wrapperType', e.target.value)}
-          className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-        >
-          <option value="format-json">Format as JSON</option>
-          <option value="format-list">Format as List</option>
-          <option value="format-table">Format as Table</option>
-          <option value="validate-input">Validate Input</option>
-          <option value="transform-data">Transform Data</option>
-          <option value="conditional-logic">Conditional Logic</option>
-          <option value="custom">Custom Wrapper</option>
-        </select>
+      <div className="space-y-2">
+        <Label>Wrapper Type</Label>
+        <Select value={content.wrapperType || 'custom'} onValueChange={(value) => onUpdate('wrapperType', value)}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="format-json">Format as JSON</SelectItem>
+            <SelectItem value="format-list">Format as List</SelectItem>
+            <SelectItem value="format-table">Format as Table</SelectItem>
+            <SelectItem value="validate-input">Validate Input</SelectItem>
+            <SelectItem value="transform-data">Transform Data</SelectItem>
+            <SelectItem value="conditional-logic">Conditional Logic</SelectItem>
+            <SelectItem value="custom">Custom Wrapper</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Wrapper Logic
-        </label>
-        <textarea
+      <div className="space-y-2">
+        <Label>Wrapper Logic</Label>
+        <Textarea
           value={content.wrapperLogic || ''}
           onChange={(e) => onUpdate('wrapperLogic', e.target.value)}
-          className="w-full h-64 p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500"
           placeholder="Define your wrapper logic here..."
+          className="min-h-[200px] font-mono"
         />
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Wrapper Configuration (JSON)
-        </label>
-        <textarea
+      <div className="space-y-2">
+        <Label>Wrapper Configuration (JSON)</Label>
+        <Textarea
           value={JSON.stringify(content.wrapperConfig || {}, null, 2)}
           onChange={(e) => {
             try {
@@ -432,8 +410,8 @@ function WrapperContentEditor({ content, onUpdate }: { content: any; onUpdate: (
               // Invalid JSON, don't update
             }
           }}
-          className="w-full h-32 p-3 border border-gray-300 rounded-lg resize-none font-mono text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
           placeholder='{"key": "value"}'
+          className="min-h-[120px] font-mono text-sm"
         />
       </div>
     </div>
@@ -443,11 +421,9 @@ function WrapperContentEditor({ content, onUpdate }: { content: any; onUpdate: (
 function TemplateContentEditor({ content, onUpdate }: { content: any; onUpdate: (field: string, value: any) => void }) {
   return (
     <div className="space-y-6">
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Template Structure (JSON)
-        </label>
-        <textarea
+      <div className="space-y-2">
+        <Label>Template Structure (JSON)</Label>
+        <Textarea
           value={JSON.stringify(content.templateStructure || {}, null, 2)}
           onChange={(e) => {
             try {
@@ -457,16 +433,14 @@ function TemplateContentEditor({ content, onUpdate }: { content: any; onUpdate: 
               // Invalid JSON, don't update
             }
           }}
-          className="w-full h-64 p-3 border border-gray-300 rounded-lg resize-none font-mono text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
           placeholder='{"sections": [{"title": "Section 1", "content": "Template content..."}]}'
+          className="min-h-[200px] font-mono text-sm"
         />
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Template Variables (JSON)
-        </label>
-        <textarea
+      <div className="space-y-2">
+        <Label>Template Variables (JSON)</Label>
+        <Textarea
           value={JSON.stringify(content.templateVariables || [], null, 2)}
           onChange={(e) => {
             try {
@@ -476,8 +450,8 @@ function TemplateContentEditor({ content, onUpdate }: { content: any; onUpdate: 
               // Invalid JSON, don't update
             }
           }}
-          className="w-full h-32 p-3 border border-gray-300 rounded-lg resize-none font-mono text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
           placeholder='[{"name": "variable1", "type": "string", "required": true}]'
+          className="min-h-[120px] font-mono text-sm"
         />
       </div>
     </div>
@@ -487,41 +461,34 @@ function TemplateContentEditor({ content, onUpdate }: { content: any; onUpdate: 
 function AssetContentEditor({ content, onUpdate }: { content: any; onUpdate: (field: string, value: any) => void }) {
   return (
     <div className="space-y-6">
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Asset Type
-        </label>
-        <select
-          value={content.assetType || 'url'}
-          onChange={(e) => onUpdate('assetType', e.target.value)}
-          className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-        >
-          <option value="prompt">Prompt Reference</option>
-          <option value="file">File Upload</option>
-          <option value="url">URL Reference</option>
-          <option value="image">Image Asset</option>
-          <option value="document">Document Asset</option>
-        </select>
+      <div className="space-y-2">
+        <Label>Asset Type</Label>
+        <Select value={content.assetType || 'url'} onValueChange={(value) => onUpdate('assetType', value)}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="prompt">Prompt Reference</SelectItem>
+            <SelectItem value="file">File Upload</SelectItem>
+            <SelectItem value="url">URL Reference</SelectItem>
+            <SelectItem value="image">Image Asset</SelectItem>
+            <SelectItem value="document">Document Asset</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Asset Reference
-        </label>
-        <input
-          type="text"
+      <div className="space-y-2">
+        <Label>Asset Reference</Label>
+        <Input
           value={content.assetReference || ''}
           onChange={(e) => onUpdate('assetReference', e.target.value)}
-          className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
           placeholder="Enter asset reference (URL, file path, etc.)"
         />
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Asset Metadata (JSON)
-        </label>
-        <textarea
+      <div className="space-y-2">
+        <Label>Asset Metadata (JSON)</Label>
+        <Textarea
           value={JSON.stringify(content.assetMetadata || {}, null, 2)}
           onChange={(e) => {
             try {
@@ -531,8 +498,8 @@ function AssetContentEditor({ content, onUpdate }: { content: any; onUpdate: (fi
               // Invalid JSON, don't update
             }
           }}
-          className="w-full h-32 p-3 border border-gray-300 rounded-lg resize-none font-mono text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
           placeholder='{"description": "Asset description", "tags": ["tag1", "tag2"]}'
+          className="min-h-[120px] font-mono text-sm"
         />
       </div>
     </div>

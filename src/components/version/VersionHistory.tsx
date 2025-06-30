@@ -1,6 +1,6 @@
 import React from 'react';
 import { Clock, GitBranch, Eye, RotateCcw, Plus, Tag, User } from 'lucide-react';
-import { formatDateTime } from '../../lib/utils';
+import { formatDateTime } from '../../lib/format-utils';
 import { cn } from '../../lib/utils';
 import type { PromptVersion } from '../../types/version';
 

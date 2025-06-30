@@ -1,7 +1,14 @@
 import React from 'react';
-import { Plus, GripVertical, X, ChevronDown, ChevronRight } from 'lucide-react';
+import { Plus, GripVertical, X, ChevronDown, ChevronRight, Hash } from 'lucide-react';
 import { usePromptStore } from '../../../stores/promptStore';
 import type { PromptSection } from '../../../types/prompt';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export function SectionEditor() {
   const { 
@@ -29,37 +36,36 @@ export function SectionEditor() {
     <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900">Structured Prompt Sections</h3>
-          <p className="text-sm text-gray-600">
+        <div className="space-y-1">
+          <h3 className="text-2xl font-bold tracking-tight">Structured Prompt Sections</h3>
+          <p className="text-muted-foreground">
             Organize your prompt into titled sections with hierarchical structure.
           </p>
         </div>
-        <button
-          onClick={handleAddSection}
-          className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Add Section</span>
-        </button>
+        <Button onClick={handleAddSection} className="gap-2">
+          <Plus className="h-4 w-4" />
+          Add Section
+        </Button>
       </div>
 
       {/* Sections */}
       <div className="space-y-4">
         {sections.length === 0 ? (
-          <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-            <h4 className="text-lg font-medium text-gray-900 mb-2">No sections yet</h4>
-            <p className="text-gray-600 mb-4">
-              Create structured prompts with organized sections and subsections.
-            </p>
-            <button
-              onClick={handleAddSection}
-              className="inline-flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Add First Section</span>
-            </button>
-          </div>
+          <Card className="border-dashed">
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <div className="h-12 w-12 rounded-lg bg-green-100 flex items-center justify-center mb-4">
+                <Hash className="h-6 w-6 text-green-600" />
+              </div>
+              <h4 className="text-lg font-semibold mb-2">No sections yet</h4>
+              <p className="text-muted-foreground mb-4 text-center max-w-md">
+                Create structured prompts with organized sections and subsections.
+              </p>
+              <Button onClick={handleAddSection} className="gap-2">
+                <Plus className="h-4 w-4" />
+                Add First Section
+              </Button>
+            </CardContent>
+          </Card>
         ) : (
           sections.map((section, index) => (
             <SectionItem
@@ -74,15 +80,18 @@ export function SectionEditor() {
 
       {/* Tips */}
       {sections.length > 0 && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-          <h4 className="text-sm font-medium text-green-900 mb-2">💡 Tips for Structured Prompts</h4>
-          <ul className="text-sm text-green-800 space-y-1">
-            <li>• Use clear, descriptive section titles</li>
-            <li>• Organize related information into logical groups</li>
-            <li>• Consider using sections like: Context, Instructions, Examples, Constraints</li>
-            <li>• Keep sections focused on a single topic or purpose</li>
-          </ul>
-        </div>
+        <Alert className="border-green-200 bg-green-50">
+          <Hash className="h-4 w-4" />
+          <AlertDescription className="text-green-800">
+            <div className="font-medium mb-2">💡 Tips for Structured Prompts</div>
+            <ul className="space-y-1 text-sm">
+              <li>• Use clear, descriptive section titles</li>
+              <li>• Organize related information into logical groups</li>
+              <li>• Consider using sections like: Context, Instructions, Examples, Constraints</li>
+              <li>• Keep sections focused on a single topic or purpose</li>
+            </ul>
+          </AlertDescription>
+        </Alert>
       )}
     </div>
   );
@@ -99,79 +108,85 @@ function SectionItem({ section, onUpdate, onRemove, level = 0 }: SectionItemProp
   const [isExpanded, setIsExpanded] = React.useState(true);
 
   return (
-    <div 
-      className="bg-white border border-gray-200 rounded-lg overflow-hidden"
+    <Card 
+      className="border-green-200 shadow-sm"
       style={{ marginLeft: level * 20 }}
     >
       {/* Section Header */}
-      <div className="flex items-center space-x-3 p-4 bg-gray-50 border-b border-gray-200">
-        <button className="text-gray-400 hover:text-gray-600 cursor-grab">
-          <GripVertical className="w-4 h-4" />
-        </button>
-        
-        <button
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="text-gray-600 hover:text-gray-800"
-        >
-          {isExpanded ? (
-            <ChevronDown className="w-4 h-4" />
-          ) : (
-            <ChevronRight className="w-4 h-4" />
-          )}
-        </button>
+      <CardHeader className="bg-green-50/50 border-b border-green-200 pb-4">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="sm" className="cursor-grab p-1">
+            <GripVertical className="h-4 w-4 text-muted-foreground" />
+          </Button>
+          
+          <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" size="sm" className="p-1">
+                {isExpanded ? (
+                  <ChevronDown className="h-4 w-4" />
+                ) : (
+                  <ChevronRight className="h-4 w-4" />
+                )}
+              </Button>
+            </CollapsibleTrigger>
+          </Collapsible>
 
-        <input
-          type="text"
-          value={section.title}
-          onChange={(e) => onUpdate(section.id, 'title', e.target.value)}
-          placeholder="Section title..."
-          className="flex-1 px-3 py-1 border border-gray-300 rounded-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500"
-        />
+          <Hash className="h-4 w-4 text-green-600" />
 
-        <button
-          onClick={onRemove}
-          className="text-gray-400 hover:text-red-600 transition-colors"
-        >
-          <X className="w-4 h-4" />
-        </button>
-      </div>
+          <Input
+            value={section.title}
+            onChange={(e) => onUpdate(section.id, 'title', e.target.value)}
+            placeholder="Section title..."
+            className="flex-1 h-8 font-medium border-0 bg-transparent focus-visible:ring-1 focus-visible:ring-green-500"
+          />
+
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onRemove}
+            className="p-1 text-muted-foreground hover:text-destructive"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      </CardHeader>
 
       {/* Section Content */}
-      {isExpanded && (
-        <div className="p-4 space-y-4">
-          {/* Description */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Description (optional)
-            </label>
-            <input
-              type="text"
-              value={section.description || ''}
-              onChange={(e) => onUpdate(section.id, 'description', e.target.value)}
-              placeholder="Brief description of this section..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
+      <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
+        <CollapsibleContent>
+          <CardContent className="pt-6">
+            <div className="space-y-4">
+              {/* Description */}
+              <div className="space-y-2">
+                <Label htmlFor={`desc-${section.id}`}>Description (optional)</Label>
+                <Input
+                  id={`desc-${section.id}`}
+                  value={section.description || ''}
+                  onChange={(e) => onUpdate(section.id, 'description', e.target.value)}
+                  placeholder="Brief description of this section..."
+                />
+              </div>
 
-          {/* Content */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Content
-            </label>
-            <textarea
-              value={section.content}
-              onChange={(e) => onUpdate(section.id, 'content', e.target.value)}
-              placeholder="Enter section content..."
-              className="w-full h-32 p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-            <div className="flex justify-end mt-1">
-              <span className="text-xs text-gray-500">
-                {section.content.length} characters
-              </span>
+              {/* Content */}
+              <div className="space-y-2">
+                <Label htmlFor={`content-${section.id}`}>Content</Label>
+                <Textarea
+                  id={`content-${section.id}`}
+                  value={section.content}
+                  onChange={(e) => onUpdate(section.id, 'content', e.target.value)}
+                  placeholder="Enter section content..."
+                  className="min-h-[120px] resize-none"
+                />
+                <div className="flex justify-end">
+                  <span className="text-xs text-muted-foreground">
+                    {section.content.length} characters
+                  </span>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
-    </div>
+          </CardContent>
+        </CollapsibleContent>
+      </Collapsible>
+    </Card>
   );
 }

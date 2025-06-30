@@ -1,7 +1,8 @@
 import React from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Layout } from '../components/layout/Layout';
-import { Settings, Save, Download, Plus, AlertCircle, History, GitBranch, FileText } from 'lucide-react';
+import { Save, Download, Plus, AlertCircle, History, FileText, MessageSquare, Info, Code, FileCheck, User, BookOpen, Shield, Lightbulb } from 'lucide-react';
+import { Separator } from "@/components/ui/separator";
 import { useAuth } from '../contexts/AuthContext';
 import { ensureUserProfile } from '../lib/profile';
 import { usePromptStore } from '../stores/promptStore';
@@ -13,8 +14,17 @@ import { VersionHistory } from '../components/version/VersionHistory';
 import { DiffViewer } from '../components/version/DiffViewer';
 import { ExportDialog } from '../components/export/ExportDialog';
 import { VersionDiffer } from '../lib/version/differ';
-import type { StructureType, Complexity, Prompt } from '../types/prompt';
-import type { PromptVersion, VersionComparison, PromptType } from '../types/version';
+import type { StructureType, Complexity, Prompt, PromptType } from '../types/prompt';
+import type { PromptVersion, VersionComparison } from '../types/version';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export function PromptEditor() {
   const [searchParams] = useSearchParams();
@@ -44,17 +54,15 @@ export function PromptEditor() {
   const [showExportDialog, setShowExportDialog] = React.useState(false);
   const [versionComparison, setVersionComparison] = React.useState<VersionComparison | null>(null);
   const [showAssetTypeSelector, setShowAssetTypeSelector] = React.useState(isAsset);
-  const [selectedAssetType, setSelectedAssetType] = React.useState<PromptType>('context');
+  const [selectedAssetType, setSelectedAssetType] = React.useState<PromptType>('prompt');
   const [saveError, setSaveError] = React.useState<string | null>(null);
 
   // Load existing prompt or create new one
   React.useEffect(() => {
     if (promptId && existingPrompt && !currentPrompt?.id) {
-      // Only load existing prompt if we don't already have it loaded
       console.log('Loading existing prompt:', existingPrompt);
       setCurrentPrompt(existingPrompt);
     } else if (!promptId && !currentPrompt && !isAsset) {
-      // Create new prompt only if we don't have one
       console.log('Creating new prompt');
       setCurrentPrompt({
         title: 'Untitled Prompt',
@@ -73,22 +81,20 @@ export function PromptEditor() {
         version_batch: 0,
       });
     }
-  }, [promptId, existingPrompt, setCurrentPrompt, isAsset]); // eslint-disable-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [promptId, existingPrompt, isAsset]);
 
   const handleSave = async () => {
     if (!currentPrompt) return;
 
-    // Clear any previous errors
     setSaveError(null);
 
     try {
-      // Check if user is authenticated
       if (!user) {
         setSaveError('You must be logged in to save prompts');
         return;
       }
 
-      // Ensure user has a profile - create one if it doesn't exist
       const profileResult = await ensureUserProfile(user);
       if (!profileResult.success) {
         setSaveError(profileResult.error || 'Failed to verify user profile');
@@ -96,7 +102,6 @@ export function PromptEditor() {
       }
 
       if (currentPrompt.id) {
-        // Update existing prompt or asset
         await updatePrompt.mutateAsync({
           id: currentPrompt.id,
           title: currentPrompt.title!,
@@ -115,7 +120,6 @@ export function PromptEditor() {
         });
       } else {
         if (currentPrompt.prompt_type === 'prompt') {
-          // Create new prompt
           const newPrompt = await createPrompt.mutateAsync({
             title: currentPrompt.title!,
             description: currentPrompt.description,
@@ -130,11 +134,9 @@ export function PromptEditor() {
             tags: currentPrompt.tags || [],
           });
           
-          // Update URL with new prompt ID
           navigate(`/editor?prompt=${newPrompt.id}`, { replace: true });
           setCurrentPrompt(newPrompt);
         } else {
-          // Create new asset
           const assetId = await createAsset.mutateAsync({
             title: currentPrompt.title!,
             description: currentPrompt.description,
@@ -148,7 +150,6 @@ export function PromptEditor() {
             is_public: currentPrompt.is_public || false,
           });
           
-          // Navigate to asset editor
           navigate(`/asset-editor/${assetId}`, { replace: true });
         }
       }
@@ -157,7 +158,6 @@ export function PromptEditor() {
     } catch (error) {
       console.error('Failed to save prompt:', error);
       
-      // Enhanced error handling
       if (error && typeof error === 'object' && 'code' in error) {
         const supabaseError = error as { code: string; message: string; details?: string };
         
@@ -198,7 +198,6 @@ export function PromptEditor() {
           version,
         });
         
-        // Refresh current prompt
         window.location.reload();
       } catch (error) {
         console.error('Failed to restore version:', error);
@@ -212,7 +211,6 @@ export function PromptEditor() {
   };
 
   const handleExport = (result: { content: string; mimeType: string; filename: string }) => {
-    // Create download link
     const blob = new Blob([result.content], { type: result.mimeType });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -275,339 +273,371 @@ export function PromptEditor() {
 
   return (
     <Layout>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="container mx-auto px-4">
         {/* Header */}
         <div className="mb-8">
           {/* Error Display */}
           {saveError && (
-            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-              <div className="flex items-center">
-                <AlertCircle className="w-5 h-5 text-red-600 mr-2" />
-                <p className="text-red-800">{saveError}</p>
-                <button
+            <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription className="flex items-center justify-between">
+                {saveError}
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => setSaveError(null)}
-                  className="ml-auto text-red-600 hover:text-red-800"
                 >
                   ×
-                </button>
-              </div>
-            </div>
+                </Button>
+              </AlertDescription>
+            </Alert>
           )}
 
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Prompt Editor</h1>
-              <p className="text-gray-600 mt-1">
+              <h1 className="text-2xl lg:text-3xl font-bold">Prompt Editor</h1>
+              <p className="text-muted-foreground mt-1">
                 Create and edit prompts with advanced structuring and version control
-              </p>
-            </div>
-            <div className="flex items-center space-x-3">
-              <button
-                onClick={handleNewPrompt}
-                className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                <Plus className="w-4 h-4" />
-                <span>New</span>
-              </button>
-              <button
-                onClick={() => handleNewPrompt(true)}
-                className="flex items-center space-x-2 px-4 py-2 border border-orange-300 text-orange-700 rounded-lg hover:bg-orange-50 transition-colors"
-              >
-                <FileText className="w-4 h-4" />
-                <span>New Asset</span>
-              </button>
-              <button
-                onClick={() => setShowVersionHistory(!showVersionHistory)}
-                className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                <History className="w-4 h-4" />
-                <span>Versions</span>
-              </button>
-              <button
-                onClick={() => setShowExportDialog(true)}
-                disabled={!currentPrompt}
-                className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Download className="w-4 h-4" />
-                <span>Export</span>
-              </button>
-              <button 
-                onClick={handleSave}
-                disabled={!hasUnsavedChanges || createPrompt.isPending || updatePrompt.isPending}
-                className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Save className="w-4 h-4" />
-                <span>
-                  {createPrompt.isPending || updatePrompt.isPending ? 'Saving...' : 'Save'}
-                </span>
-              </button>
-            </div>
-          </div>
-        </div>
+             </p>
+           </div>
+           <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+             <Button variant="outline" onClick={() => handleNewPrompt()} size="sm">
+               <Plus className="w-4 h-4 mr-2" />
+               <span className="hidden sm:inline">New</span>
+             </Button>
+             <Button variant="outline" onClick={() => handleNewPrompt(true)} size="sm">
+               <FileText className="w-4 h-4 mr-2" />
+               <span className="hidden sm:inline">New Asset</span>
+             </Button>
+             <Button 
+               variant="outline" 
+               onClick={() => setShowVersionHistory(!showVersionHistory)}
+               size="sm"
+             >
+               <History className="w-4 h-4 mr-2" />
+               <span className="hidden sm:inline">Versions</span>
+             </Button>
+             <Button 
+               variant="outline" 
+               onClick={() => setShowExportDialog(true)}
+               disabled={!currentPrompt}
+               size="sm"
+             >
+               <Download className="w-4 h-4 mr-2" />
+               <span className="hidden sm:inline">Export</span>
+             </Button>
+             <Button 
+               onClick={handleSave}
+               disabled={!hasUnsavedChanges || createPrompt.isPending || updatePrompt.isPending}
+               size="sm"
+               className="min-w-[100px]"
+             >
+               <Save className="w-4 h-4 mr-2" />
+               {createPrompt.isPending || updatePrompt.isPending ? 'Saving...' : 'Save'}
+             </Button>
+           </div>
+         </div>
+       </div>
 
-        {/* Asset Type Selector Modal */}
-        {showAssetTypeSelector && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
-              <div className="p-6 border-b border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900">Select Asset Type</h3>
-              </div>
-              
-              <div className="p-6 space-y-4">
-                <p className="text-gray-600">
-                  Choose the type of asset you want to create:
-                </p>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {[
-                    { value: 'context', label: 'Context', description: 'Background information and context' },
-                    { value: 'response_schema', label: 'Response Schema', description: 'Structure for AI responses' },
-                    { value: 'response_examples', label: 'Response Examples', description: 'Example outputs for reference' },
-                    { value: 'persona', label: 'Persona', description: 'Character or role definition' },
-                    { value: 'instructions', label: 'Instructions', description: 'Specific guidance for AI' },
-                    { value: 'constraints', label: 'Constraints', description: 'Limitations and boundaries' },
-                    { value: 'examples', label: 'Examples', description: 'Illustrative examples for AI' },
-                  ].map((type) => (
-                    <button
-                      key={type.value}
-                      onClick={() => setSelectedAssetType(type.value as PromptType)}
-                      className={cn(
-                        'p-4 rounded-lg border text-left transition-all',
-                        selectedAssetType === type.value
-                          ? 'border-orange-500 bg-orange-50'
-                          : 'border-gray-200 hover:border-gray-300'
-                      )}
-                    >
-                      <div className="font-medium text-gray-900">{type.label}</div>
-                      <div className="text-sm text-gray-600">{type.description}</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-              
-              <div className="p-6 border-t border-gray-200 flex items-center justify-end space-x-3">
-                <button
-                  onClick={() => setShowAssetTypeSelector(false)}
-                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleCreateAsset}
-                  className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
-                >
-                  Create Asset
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+       {/* Asset Type Selector Modal */}
+       <Dialog open={showAssetTypeSelector} onOpenChange={setShowAssetTypeSelector}>
+         <DialogContent className="sm:max-w-2xl">
+           <DialogHeader>
+             <DialogTitle>Select Asset Type</DialogTitle>
+           </DialogHeader>
+           
+           <div className="space-y-6">
+             <p className="text-sm text-muted-foreground">
+               Choose the type of asset you want to create:
+             </p>
+             
+             {/* Main Prompt Section */}
+             <div className="space-y-3">
+               <h3 className="text-sm font-semibold text-foreground">Main Prompt</h3>
+               <Button
+                 variant={selectedAssetType === 'prompt' ? "default" : "outline"}
+                 className="w-full p-4 h-auto text-left justify-start"
+                 onClick={() => setSelectedAssetType('prompt')}
+               >
+                 <div className="flex items-start gap-3 w-full">
+                   <MessageSquare className="w-5 h-5 mt-0.5 flex-shrink-0" />
+                   <div className="flex-1">
+                     <div className="font-medium">Prompt</div>
+                     <div className="text-sm text-muted-foreground">Main AI prompt with structured content</div>
+                   </div>
+                 </div>
+               </Button>
+             </div>
+             
+             <Separator />
+             
+             {/* Asset Components Section */}
+             <div className="space-y-3">
+               <h3 className="text-sm font-semibold text-foreground">Asset Components</h3>
+               <div className="grid grid-cols-2 gap-3">
+                 {[
+                   { value: 'context', label: 'Context', description: 'Background information', icon: Info },
+                   { value: 'response_schema', label: 'Response Schema', description: 'Output structure', icon: Code },
+                   { value: 'response_examples', label: 'Response Examples', description: 'Example outputs', icon: FileCheck },
+                   { value: 'persona', label: 'Persona', description: 'Character definition', icon: User },
+                   { value: 'instructions', label: 'Instructions', description: 'Specific guidance', icon: BookOpen },
+                   { value: 'constraints', label: 'Constraints', description: 'Limitations & rules', icon: Shield },
+                   { value: 'examples', label: 'Examples', description: 'Illustrative examples', icon: Lightbulb },
+                 ].map((type) => {
+                   const IconComponent = type.icon;
+                   return (
+                     <Button
+                       key={type.value}
+                       variant={selectedAssetType === type.value ? "default" : "outline"}
+                       className="p-3 h-auto text-left justify-start hover:shadow-sm transition-shadow"
+                       onClick={() => setSelectedAssetType(type.value as PromptType)}
+                     >
+                       <div className="flex items-start gap-2 w-full">
+                         <IconComponent className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                         <div className="flex-1 min-w-0">
+                           <div className="font-medium text-sm truncate">{type.label}</div>
+                           <div className="text-xs text-muted-foreground line-clamp-2">{type.description}</div>
+                         </div>
+                       </div>
+                     </Button>
+                   );
+                 })}
+               </div>
+             </div>
+           </div>
+           
+           <div className="flex gap-3 pt-4">
+             <Button variant="outline" onClick={() => setShowAssetTypeSelector(false)} className="flex-1">
+               Cancel
+             </Button>
+             {selectedAssetType === 'prompt' ? (
+               <Button onClick={() => {
+               setShowAssetTypeSelector(false);
+               handleNewPrompt(false);
+               }} className="flex-1">
+               Create Prompt
+               </Button>
+             ) : (
+               <Button onClick={handleCreateAsset} className="flex-1">
+               Create Asset
+               </Button>
+             )}
+           </div>
+         </DialogContent>
+       </Dialog>
 
-        {/* Main Editor Interface */}
-        <div className={`grid gap-8 ${showVersionHistory ? 'grid-cols-1 xl:grid-cols-4' : 'grid-cols-1 xl:grid-cols-3'}`}>
-          {/* Left Panel - Prompt Details */}
-          <div className="xl:col-span-1 space-y-6">
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Prompt Details</h3>
-              
-              <div className="space-y-4">
-                {/* Prompt Title */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Title
-                  </label>
-                  <input
-                    type="text"
-                    value={currentPrompt?.title || ''}
-                    onChange={(e) => updatePromptField('title', e.target.value)}
-                    className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    placeholder="Enter prompt title..."
-                  />
-                </div>
+       {/* Main Editor Interface */}
+       <div className={`grid gap-6 ${showVersionHistory ? 'grid-cols-1 xl:grid-cols-4' : 'grid-cols-1 xl:grid-cols-3'}`}>
+         {/* Left Panel - Prompt Details */}
+         <div className="xl:col-span-1 space-y-6">
+           <Card>
+             <CardHeader>
+               <CardTitle>Prompt Details</CardTitle>
+             </CardHeader>
+             <CardContent className="space-y-4">
+               {/* Prompt Title */}
+               <div className="space-y-2">
+                 <Label htmlFor="title">Title</Label>
+                 <Input
+                   id="title"
+                   value={currentPrompt?.title || ''}
+                   onChange={(e) => updatePromptField('title', e.target.value)}
+                   placeholder="Enter prompt title..."
+                 />
+               </div>
 
-                {/* Description */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Description
-                  </label>
-                  <textarea
-                    value={currentPrompt?.description || ''}
-                    onChange={(e) => updatePromptField('description', e.target.value)}
-                    className="w-full h-20 p-2 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    placeholder="Brief description of your prompt..."
-                  />
-                </div>
+               {/* Description */}
+               <div className="space-y-2">
+                 <Label htmlFor="description">Description</Label>
+                 <Textarea
+                   id="description"
+                   value={currentPrompt?.description || ''}
+                   onChange={(e) => updatePromptField('description', e.target.value)}
+                   placeholder="Brief description of your prompt..."
+                   className="min-h-[80px]"
+                 />
+               </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Structure Type
-                  </label>
-                  <select 
-                    value={currentPrompt?.structure_type || 'standard'}
-                    onChange={(e) => {
-                      const newStructureType = e.target.value as StructureType;
-                      console.log('Changing structure type from', currentPrompt?.structure_type, 'to', newStructureType);
-                      updatePromptField('structure_type', newStructureType);
-                      
-                      // Clear content when structure type changes to avoid compatibility issues
-                      if (currentPrompt?.structure_type !== newStructureType) {
-                        console.log('Clearing content due to structure type change');
-                        updatePromptField('content', {});
-                      }
-                    }}
-                    disabled={!!currentPrompt?.id || currentPrompt?.prompt_type !== 'prompt'}
-                    className={`w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
-                      (currentPrompt?.id || currentPrompt?.prompt_type !== 'prompt') ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''
-                    }`}
-                  >
-                    <option value="standard">Standard (Segments)</option>
-                    <option value="structured">Structured (Sections)</option>
-                    <option value="modulized">Modulized (Modules)</option>
-                    <option value="advanced">Advanced (Blocks)</option>
-                  </select>
-                  {currentPrompt?.id && currentPrompt?.prompt_type === 'prompt' && (
-                    <p className="text-xs text-gray-500 mt-1">
-                      Structure type cannot be changed for existing prompts
-                    </p>
-                  )}
-                  {currentPrompt?.prompt_type !== 'prompt' && (
-                    <p className="text-xs text-gray-500 mt-1">
-                      Structure type is fixed for assets
-                    </p>
-                  )}
-                </div>
+               {/* Structure Type */}
+               <div className="space-y-2">
+                 <Label>Structure Type</Label>
+                 <Select 
+                   value={currentPrompt?.structure_type || 'standard'}
+                   onValueChange={(value) => {
+                     const newStructureType = value as StructureType;
+                     updatePromptField('structure_type', newStructureType);
+                     
+                     if (currentPrompt?.structure_type !== newStructureType) {
+                       updatePromptField('content', {});
+                     }
+                   }}
+                   disabled={!!currentPrompt?.id || currentPrompt?.prompt_type !== 'prompt'}
+                 >
+                   <SelectTrigger>
+                     <SelectValue />
+                   </SelectTrigger>
+                   <SelectContent>
+                     <SelectItem value="standard">Standard (Segments)</SelectItem>
+                     <SelectItem value="structured">Structured (Sections)</SelectItem>
+                     <SelectItem value="modulized">Modulized (Modules)</SelectItem>
+                     <SelectItem value="advanced">Advanced (Blocks)</SelectItem>
+                   </SelectContent>
+                 </Select>
+                 {currentPrompt?.id && currentPrompt?.prompt_type === 'prompt' && (
+                   <p className="text-xs text-muted-foreground">
+                     Structure type cannot be changed for existing prompts
+                   </p>
+                 )}
+                 {currentPrompt?.prompt_type !== 'prompt' && (
+                   <p className="text-xs text-muted-foreground">
+                     Structure type is fixed for assets
+                   </p>
+                 )}
+               </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Complexity
-                  </label>
-                  <select 
-                    value={currentPrompt?.complexity || 'simple'}
-                    onChange={(e) => updatePromptField('complexity', e.target.value as Complexity)}
-                    className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  >
-                    <option value="simple">Simple</option>
-                    <option value="medium">Medium</option>
-                    <option value="complex">Complex</option>
-                  </select>
-                </div>
+               {/* Complexity */}
+               <div className="space-y-2">
+                 <Label>Complexity</Label>
+                 <Select 
+                   value={currentPrompt?.complexity || 'simple'}
+                   onValueChange={(value) => updatePromptField('complexity', value as Complexity)}
+                 >
+                   <SelectTrigger>
+                     <SelectValue />
+                   </SelectTrigger>
+                   <SelectContent>
+                     <SelectItem value="simple">Simple</SelectItem>
+                     <SelectItem value="medium">Medium</SelectItem>
+                     <SelectItem value="complex">Complex</SelectItem>
+                   </SelectContent>
+                 </Select>
+               </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Category
-                  </label>
-                  <select 
-                    value={currentPrompt?.category || 'ai'}
-                    onChange={(e) => updatePromptField('category', e.target.value)}
-                    className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  >
-                    <option value="ai">AI Assistant</option>
-                    <option value="web">Web Development</option>
-                    <option value="data">Data Analysis</option>
-                    <option value="creative">Creative Writing</option>
-                    <option value="business">Business</option>
-                    <option value="research">Research</option>
-                  </select>
-                </div>
+               {/* Category */}
+               <div className="space-y-2">
+                 <Label>Category</Label>
+                 <Select 
+                   value={currentPrompt?.category || 'ai'}
+                   onValueChange={(value) => updatePromptField('category', value)}
+                 >
+                   <SelectTrigger>
+                     <SelectValue />
+                   </SelectTrigger>
+                   <SelectContent>
+                     <SelectItem value="ai">AI Assistant</SelectItem>
+                     <SelectItem value="web">Web Development</SelectItem>
+                     <SelectItem value="data">Data Analysis</SelectItem>
+                     <SelectItem value="creative">Creative Writing</SelectItem>
+                     <SelectItem value="business">Business</SelectItem>
+                     <SelectItem value="research">Research</SelectItem>
+                   </SelectContent>
+                 </Select>
+               </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Type
-                  </label>
-                  <select 
-                    value={currentPrompt?.type || 'assistant'}
-                    onChange={(e) => updatePromptField('type', e.target.value)}
-                    className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  >
-                    <option value="assistant">Assistant</option>
-                    <option value="analyzer">Analyzer</option>
-                    <option value="generator">Generator</option>
-                    <option value="optimizer">Optimizer</option>
-                    <option value="tool">Tool</option>
-                    <option value="agent">Agent</option>
-                  </select>
-                </div>
+               {/* Type */}
+               <div className="space-y-2">
+                 <Label>Type</Label>
+                 <Select 
+                   value={currentPrompt?.type || 'assistant'}
+                   onValueChange={(value) => updatePromptField('type', value)}
+                 >
+                   <SelectTrigger>
+                     <SelectValue />
+                   </SelectTrigger>
+                   <SelectContent>
+                     <SelectItem value="assistant">Assistant</SelectItem>
+                     <SelectItem value="analyzer">Analyzer</SelectItem>
+                     <SelectItem value="generator">Generator</SelectItem>
+                     <SelectItem value="optimizer">Optimizer</SelectItem>
+                     <SelectItem value="tool">Tool</SelectItem>
+                     <SelectItem value="agent">Agent</SelectItem>
+                   </SelectContent>
+                 </Select>
+               </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Language
-                  </label>
-                  <select 
-                    value={currentPrompt?.language || 'english'}
-                    onChange={(e) => updatePromptField('language', e.target.value)}
-                    className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  >
-                    <option value="english">English</option>
-                    <option value="french">French</option>
-                    <option value="german">German</option>
-                    <option value="spanish">Spanish</option>
-                  </select>
-                </div>
+               {/* Language */}
+               <div className="space-y-2">
+                 <Label>Language</Label>
+                 <Select 
+                   value={currentPrompt?.language || 'english'}
+                   onValueChange={(value) => updatePromptField('language', value)}
+                 >
+                   <SelectTrigger>
+                     <SelectValue />
+                   </SelectTrigger>
+                   <SelectContent>
+                     <SelectItem value="english">English</SelectItem>
+                     <SelectItem value="french">French</SelectItem>
+                     <SelectItem value="german">German</SelectItem>
+                     <SelectItem value="spanish">Spanish</SelectItem>
+                   </SelectContent>
+                 </Select>
+               </div>
 
-                {/* Privacy Setting */}
-                <div>
-                  <label className="flex items-center space-x-3">
-                    <input
-                      type="checkbox"
-                      checked={currentPrompt?.is_public || false}
-                      onChange={(e) => updatePromptField('is_public', e.target.checked)}
-                      className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                    />
-                    <div>
-                      <div className="font-medium text-gray-900">Make Public</div>
-                      <div className="text-sm text-gray-600">Allow others to discover and use this prompt</div>
-                    </div>
-                  </label>
-                </div>
-              </div>
-            </div>
-          </div>
+               {/* Privacy Setting */}
+               <div className="flex items-center space-x-2">
+                 <Checkbox
+                   id="public"
+                   checked={currentPrompt?.is_public || false}
+                   onCheckedChange={(checked) => updatePromptField('is_public', checked)}
+                 />
+                 <div className="grid gap-1.5 leading-none">
+                   <Label htmlFor="public" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                     Make Public
+                   </Label>
+                   <p className="text-xs text-muted-foreground">
+                     Allow others to discover and use this prompt
+                   </p>
+                 </div>
+               </div>
+             </CardContent>
+           </Card>
+         </div>
 
-          {/* Center Panel - Editor */}
-          <div className={showVersionHistory ? "xl:col-span-2" : "xl:col-span-2"}>
-            <div className="bg-white rounded-xl border border-gray-200 h-full min-h-[600px]">
-              <PromptEditorComponent />
-            </div>
-          </div>
+         {/* Center Panel - Editor */}
+         <div className={showVersionHistory ? "xl:col-span-2" : "xl:col-span-2"}>
+           <Card className="h-full min-h-[600px]">
+             <PromptEditorComponent />
+           </Card>
+         </div>
 
-          {/* Right Panel - Version History */}
-          {showVersionHistory && (
-            <div className="xl:col-span-1">
-              <VersionHistory
-                versions={versions}
-                currentVersion={versions.find(v => 
-                  v.version_major === currentPrompt?.version_major &&
-                  v.version_minor === currentPrompt?.version_minor &&
-                  v.version_batch === currentPrompt?.version_batch
-                )}
-                onSelectVersion={(version) => {
-                  // TODO: Implement version preview
-                  console.log('Selected version:', version);
-                }}
-                onRestoreVersion={handleRestoreVersion}
-                onCreateVersion={handleCreateVersion}
-                onCompareVersions={handleCompareVersions}
-              />
-            </div>
-          )}
-        </div>
+         {/* Right Panel - Version History */}
+         {showVersionHistory && (
+           <div className="xl:col-span-1">
+             <VersionHistory
+               versions={versions}
+               currentVersion={versions.find(v => 
+                 v.version_major === currentPrompt?.version_major &&
+                 v.version_minor === currentPrompt?.version_minor &&
+                 v.version_batch === currentPrompt?.version_batch
+               )}
+               onSelectVersion={(version) => {
+                 console.log('Selected version:', version);
+               }}
+               onRestoreVersion={handleRestoreVersion}
+               onCreateVersion={handleCreateVersion}
+               onCompareVersions={handleCompareVersions}
+             />
+           </div>
+         )}
+       </div>
 
-        {/* Modals */}
-        {versionComparison && (
-          <DiffViewer
-            comparison={versionComparison}
-            onClose={() => setVersionComparison(null)}
-          />
-        )}
+       {/* Modals */}
+       {versionComparison && (
+         <DiffViewer
+           comparison={versionComparison}
+           onClose={() => setVersionComparison(null)}
+         />
+       )}
 
-        {showExportDialog && currentPrompt && currentPrompt.id && (
-          <ExportDialog
-            prompt={currentPrompt as Prompt}
-            onClose={() => setShowExportDialog(false)}
-            onExport={handleExport}
-          />
-        )}
-      </div>
-    </Layout>
-  );
+       {showExportDialog && currentPrompt && currentPrompt.id && (
+         <ExportDialog
+           prompt={currentPrompt as Prompt}
+           onClose={() => setShowExportDialog(false)}
+           onExport={handleExport}
+         />
+       )}
+     </div>
+   </Layout>
+ );
 }

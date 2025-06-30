@@ -14,7 +14,7 @@ import {
   Trash2
 } from 'lucide-react';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { formatDate, truncateText } from '../../lib/utils';
+import { formatDate, truncateText } from '../../lib/format-utils';
 import { cn } from '../../lib/utils';
 import type { Prompt } from '../../types/prompt';
 

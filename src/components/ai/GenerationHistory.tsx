@@ -1,7 +1,7 @@
 import React from 'react';
 import { Clock, Zap, RotateCcw, Trash2 } from 'lucide-react';
 import { AI_PROVIDERS, type AIProvider } from '../../lib/ai/providers';
-import { formatDateTime } from '../../lib/utils';
+import { formatDateTime } from '../../lib/format-utils';
 
 interface GenerationHistoryItem {
   id: string;

@@ -1,9 +1,17 @@
 import React from 'react';
-import { Plus, GripVertical, X, Folder, FileText, Settings, ChevronDown, ChevronRight } from 'lucide-react';
+import { Plus, GripVertical, X, Folder, FileText, ChevronDown, ChevronRight } from 'lucide-react';
 import { usePromptStore } from '../../../stores/promptStore';
 import { ModuleComposer } from '../components/ModuleComposer';
 import { AssetIntegrator } from '../components/AssetIntegrator';
 import type { PromptBlock } from '../../../types/prompt';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export function AdvancedBlockEditor() {
   const { 
@@ -33,49 +41,48 @@ export function AdvancedBlockEditor() {
     <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900">Advanced Prompt Architecture</h3>
-          <p className="text-sm text-gray-600">
+        <div className="space-y-1">
+          <h3 className="text-2xl font-bold tracking-tight">Advanced Prompt Architecture</h3>
+          <p className="text-muted-foreground">
             Create sophisticated prompt structures with organizational blocks, modules, wrappers, and assets.
           </p>
         </div>
-        <button
-          onClick={handleAddBlock}
-          className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Add Block</span>
-        </button>
+        <Button onClick={handleAddBlock} className="gap-2">
+          <Plus className="h-4 w-4" />
+          Add Block
+        </Button>
       </div>
 
       {/* Architecture Overview */}
-      <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-        <h4 className="text-sm font-medium text-orange-900 mb-2">🏗️ Advanced Architecture Features</h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-orange-800">
-          <div>• Organizational blocks for logical grouping</div>
-          <div>• Nested modules with processing wrappers</div>
-          <div>• Asset integration (prompts, files, URLs)</div>
-          <div>• Complex dependency management</div>
-        </div>
-      </div>
+      <Alert className="border-amber-200 bg-amber-50">
+        <Folder className="h-4 w-4" />
+        <AlertDescription className="text-amber-800">
+          <div className="font-medium mb-2">🏗️ Advanced Architecture Features</div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+            <div>• Organizational blocks for logical grouping</div>
+            <div>• Nested modules with processing wrappers</div>
+            <div>• Asset integration (prompts, files, URLs)</div>
+            <div>• Complex dependency management</div>
+          </div>
+        </AlertDescription>
+      </Alert>
 
       {/* Blocks */}
       <div className="space-y-6">
         {blocks.length === 0 ? (
-          <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-            <Folder className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <h4 className="text-lg font-medium text-gray-900 mb-2">No blocks yet</h4>
-            <p className="text-gray-600 mb-4">
-              Build sophisticated prompt architectures with organizational blocks containing modules and assets.
-            </p>
-            <button
-              onClick={handleAddBlock}
-              className="inline-flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Add First Block</span>
-            </button>
-          </div>
+          <Card className="border-dashed">
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <Folder className="h-12 w-12 text-muted-foreground mb-4" />
+              <CardTitle className="mb-2">No blocks yet</CardTitle>
+              <p className="text-muted-foreground mb-4 text-center max-w-md">
+                Build sophisticated prompt architectures with organizational blocks containing modules and assets.
+              </p>
+              <Button onClick={handleAddBlock} className="gap-2">
+                <Plus className="h-4 w-4" />
+                Add First Block
+              </Button>
+            </CardContent>
+          </Card>
         ) : (
           blocks.map((block, index) => (
             <AdvancedBlockItem
@@ -138,144 +145,147 @@ function AdvancedBlockItem({ block, onUpdate, onRemove }: AdvancedBlockItemProps
   };
 
   return (
-    <div className="bg-white border-2 border-orange-200 rounded-lg overflow-hidden shadow-sm">
+    <Card className="border-amber-200 shadow-sm">
       {/* Block Header */}
-      <div className="flex items-center space-x-3 p-4 bg-orange-50 border-b border-orange-200">
-        <button className="text-gray-400 hover:text-gray-600 cursor-grab">
-          <GripVertical className="w-4 h-4" />
-        </button>
-        
-        <button
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="text-gray-600 hover:text-orange-600 transition-colors"
-        >
-          {isExpanded ? (
-            <ChevronDown className="w-4 h-4" />
-          ) : (
-            <ChevronRight className="w-4 h-4" />
-          )}
-        </button>
+      <CardHeader className="bg-amber-50/50 border-b border-amber-200 pb-4">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="sm" className="cursor-grab p-1">
+            <GripVertical className="h-4 w-4 text-muted-foreground" />
+          </Button>
+          
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="p-1"
+          >
+            {isExpanded ? (
+              <ChevronDown className="h-4 w-4" />
+            ) : (
+              <ChevronRight className="h-4 w-4" />
+            )}
+          </Button>
 
-        <Folder className="w-5 h-5 text-orange-600" />
+          <Folder className="h-5 w-5 text-amber-600" />
 
-        <input
-          type="text"
-          value={block.title}
-          onChange={(e) => onUpdate(block.id, 'title', e.target.value)}
-          placeholder="Block title..."
-          className="flex-1 px-3 py-1 border border-gray-300 rounded-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-orange-500"
-        />
+          <Input
+            value={block.title}
+            onChange={(e) => onUpdate(block.id, 'title', e.target.value)}
+            placeholder="Block title..."
+            className="flex-1 h-8 font-medium border-0 bg-transparent focus-visible:ring-1 focus-visible:ring-amber-500"
+          />
 
-        <div className="flex items-center space-x-2 text-sm text-gray-500">
-          <span>{block.modules.length} modules</span>
-          <span>•</span>
-          <span>{(block.assets || []).length} assets</span>
+          <div className="flex items-center gap-2">
+            <Badge variant="secondary" className="text-xs">
+              {block.modules.length} modules
+            </Badge>
+            <Badge variant="secondary" className="text-xs">
+              {(block.assets || []).length} assets
+            </Badge>
+          </div>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onRemove}
+            className="p-1 text-muted-foreground hover:text-destructive"
+          >
+            <X className="h-4 w-4" />
+          </Button>
         </div>
-
-        <button
-          onClick={onRemove}
-          className="text-gray-400 hover:text-red-600 transition-colors"
-        >
-          <X className="w-4 h-4" />
-        </button>
-      </div>
+      </CardHeader>
 
       {/* Block Content */}
       {isExpanded && (
-        <div className="p-4 space-y-4">
-          {/* Description */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Block Description
-            </label>
-            <textarea
-              value={block.description || ''}
-              onChange={(e) => onUpdate(block.id, 'description', e.target.value)}
-              placeholder="Describe the purpose and organization of this block..."
-              className="w-full h-20 p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-orange-500"
-            />
-          </div>
-
-          {/* Tab Navigation */}
-          <div className="border-b border-gray-200">
-            <nav className="-mb-px flex space-x-8">
-              <button
-                onClick={() => setActiveTab('modules')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'modules'
-                    ? 'border-orange-500 text-orange-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                Modules ({block.modules.length})
-              </button>
-              <button
-                onClick={() => setActiveTab('assets')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'assets'
-                    ? 'border-orange-500 text-orange-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                Assets ({(block.assets || []).length})
-              </button>
-            </nav>
-          </div>
-
-          {/* Tab Content */}
-          {activeTab === 'modules' && (
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <label className="block text-sm font-medium text-gray-700">
-                  Block Modules
-                </label>
-                <button
-                  onClick={addModuleToBlock}
-                  className="flex items-center space-x-1 px-3 py-1 text-sm bg-purple-100 text-purple-700 rounded-md hover:bg-purple-200 transition-colors"
-                >
-                  <Plus className="w-3 h-3" />
-                  <span>Add Module</span>
-                </button>
-              </div>
-
-              <div className="space-y-3">
-                {block.modules.length === 0 ? (
-                  <div className="text-center py-6 bg-gray-50 rounded-lg border border-dashed border-gray-300">
-                    <FileText className="w-6 h-6 text-gray-400 mx-auto mb-2" />
-                    <p className="text-sm text-gray-600">No modules in this block</p>
-                    <button
-                      onClick={addModuleToBlock}
-                      className="mt-2 text-sm text-purple-600 hover:text-purple-700"
-                    >
-                      Add your first module
-                    </button>
-                  </div>
-                ) : (
-                  block.modules.map((module) => (
-                    <ModuleComposer
-                      key={module.id}
-                      module={module}
-                      onUpdate={(updates) => updateModuleInBlock(module.id, updates)}
-                      onRemove={() => removeModuleFromBlock(module.id)}
-                      compact={true}
-                    />
-                  ))
-                )}
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'assets' && (
-            <div>
-              <AssetIntegrator
-                assets={block.assets || []}
-                onAddAsset={addAssetToBlock}
-                onRemoveAsset={removeAssetFromBlock}
+        <CardContent className="pt-6">
+          <div className="space-y-6">
+            {/* Description */}
+            <div className="space-y-2">
+              <Label htmlFor={`desc-${block.id}`}>Block Description</Label>
+              <Textarea
+                id={`desc-${block.id}`}
+                value={block.description || ''}
+                onChange={(e) => onUpdate(block.id, 'description', e.target.value)}
+                placeholder="Describe the purpose and organization of this block..."
+                className="min-h-[80px] resize-none"
               />
             </div>
-          )}
-        </div>
+
+            {/* Tab Navigation */}
+            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)}>
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="modules" className="gap-2">
+                  Modules
+                  <Badge variant="secondary" className="text-xs">
+                    {block.modules.length}
+                  </Badge>
+                </TabsTrigger>
+                <TabsTrigger value="assets" className="gap-2">
+                  Assets
+                  <Badge variant="secondary" className="text-xs">
+                    {(block.assets || []).length}
+                  </Badge>
+                </TabsTrigger>
+              </TabsList>
+
+              {/* Tab Content */}
+              <TabsContent value="modules" className="mt-6">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <Label>Block Modules</Label>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={addModuleToBlock}
+                      className="gap-2"
+                    >
+                      <Plus className="h-3 w-3" />
+                      Add Module
+                    </Button>
+                  </div>
+
+                  <div className="space-y-3">
+                    {block.modules.length === 0 ? (
+                      <Card className="border-dashed">
+                        <CardContent className="flex flex-col items-center justify-center py-8">
+                          <FileText className="h-8 w-8 text-muted-foreground mb-2" />
+                          <p className="text-sm text-muted-foreground mb-2">No modules in this block</p>
+                          <Button
+                            variant="link"
+                            size="sm"
+                            onClick={addModuleToBlock}
+                            className="h-auto p-0"
+                          >
+                            Add your first module
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    ) : (
+                      block.modules.map((module) => (
+                        <ModuleComposer
+                          key={module.id}
+                          module={module}
+                          onUpdate={(updates) => updateModuleInBlock(module.id, updates)}
+                          onRemove={() => removeModuleFromBlock(module.id)}
+                          compact={true}
+                        />
+                      ))
+                    )}
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="assets" className="mt-6">
+                <AssetIntegrator
+                  assets={block.assets || []}
+                  onAddAsset={addAssetToBlock}
+                  onRemoveAsset={removeAssetFromBlock}
+                />
+              </TabsContent>
+            </Tabs>
+          </div>
+        </CardContent>
       )}
-    </div>
+    </Card>
   );
 }

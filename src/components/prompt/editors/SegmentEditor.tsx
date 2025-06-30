@@ -1,14 +1,20 @@
 import React from 'react';
-import { Plus, GripVertical, X } from 'lucide-react';
+import { Plus, GripVertical, X, MessageSquare } from 'lucide-react';
 import { usePromptStore } from '../../../stores/promptStore';
 import type { PromptSegment } from '../../../types/prompt';
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const segmentTypes = [
-  { value: 'system', label: 'System', description: 'System instructions and context' },
-  { value: 'user', label: 'User', description: 'User input and queries' },
-  { value: 'assistant', label: 'Assistant', description: 'Assistant responses and examples' },
-  { value: 'context', label: 'Context', description: 'Background information' },
-  { value: 'instruction', label: 'Instruction', description: 'Specific task instructions' },
+  { value: 'system', label: 'System', description: 'System instructions and context', color: 'bg-blue-100 text-blue-800' },
+  { value: 'user', label: 'User', description: 'User input and queries', color: 'bg-green-100 text-green-800' },
+  { value: 'assistant', label: 'Assistant', description: 'Assistant responses and examples', color: 'bg-purple-100 text-purple-800' },
+  { value: 'context', label: 'Context', description: 'Background information', color: 'bg-amber-100 text-amber-800' },
+  { value: 'instruction', label: 'Instruction', description: 'Specific task instructions', color: 'bg-indigo-100 text-indigo-800' },
 ];
 
 export function SegmentEditor() {
@@ -38,103 +44,116 @@ export function SegmentEditor() {
     <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900">Standard Prompt Segments</h3>
-          <p className="text-sm text-gray-600">
+        <div className="space-y-1">
+          <h3 className="text-2xl font-bold tracking-tight">Standard Prompt Segments</h3>
+          <p className="text-muted-foreground">
             Build your prompt using individual segments for different purposes.
           </p>
         </div>
-        <button
-          onClick={handleAddSegment}
-          className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Add Segment</span>
-        </button>
+        <Button onClick={handleAddSegment} className="gap-2">
+          <Plus className="h-4 w-4" />
+          Add Segment
+        </Button>
       </div>
 
       {/* Segments */}
       <div className="space-y-4">
         {segments.length === 0 ? (
-          <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-            <h4 className="text-lg font-medium text-gray-900 mb-2">No segments yet</h4>
-            <p className="text-gray-600 mb-4">
-              Start building your prompt by adding your first segment.
-            </p>
-            <button
-              onClick={handleAddSegment}
-              className="inline-flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Add First Segment</span>
-            </button>
-          </div>
+          <Card className="border-dashed">
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <div className="h-12 w-12 rounded-lg bg-blue-100 flex items-center justify-center mb-4">
+                <MessageSquare className="h-6 w-6 text-blue-600" />
+              </div>
+              <h4 className="text-lg font-semibold mb-2">No segments yet</h4>
+              <p className="text-muted-foreground mb-4 text-center max-w-md">
+                Start building your prompt by adding your first segment.
+              </p>
+              <Button onClick={handleAddSegment} className="gap-2">
+                <Plus className="h-4 w-4" />
+                Add First Segment
+              </Button>
+            </CardContent>
+          </Card>
         ) : (
           segments.map((segment, index) => (
-            <div
-              key={segment.id}
-              className="bg-white border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-colors"
-            >
-              {/* Segment Header */}
-              <div className="flex items-center space-x-3 mb-3">
-                <button className="text-gray-400 hover:text-gray-600 cursor-grab">
-                  <GripVertical className="w-4 h-4" />
-                </button>
-                
-                <select
-                  value={segment.type}
-                  onChange={(e) => handleUpdateSegment(segment.id, 'type', e.target.value)}
-                  className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                >
-                  {segmentTypes.map((type) => (
-                    <option key={type.value} value={type.value}>
-                      {type.label}
-                    </option>
-                  ))}
-                </select>
+            <Card key={segment.id} className="shadow-sm hover:shadow-md transition-shadow">
+              <CardContent className="p-6">
+                {/* Segment Header */}
+                <div className="flex items-center gap-3 mb-4">
+                  <Button variant="ghost" size="sm" className="cursor-grab p-1">
+                    <GripVertical className="h-4 w-4 text-muted-foreground" />
+                  </Button>
+                  
+                  <Select
+                    value={segment.type}
+                    onValueChange={(value) => handleUpdateSegment(segment.id, 'type', value)}
+                  >
+                    <SelectTrigger className="w-32">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {segmentTypes.map((type) => (
+                        <SelectItem key={type.value} value={type.value}>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="secondary" className={`text-xs ${type.color}`}>
+                              {type.label}
+                            </Badge>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
 
-                <span className="text-sm text-gray-500 flex-1">
-                  {segmentTypes.find(t => t.value === segment.type)?.description}
-                </span>
+                  <span className="text-sm text-muted-foreground flex-1">
+                    {segmentTypes.find(t => t.value === segment.type)?.description}
+                  </span>
 
-                <button
-                  onClick={() => removeSegment(segment.id)}
-                  className="text-gray-400 hover:text-red-600 transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeSegment(segment.id)}
+                    className="p-1 text-muted-foreground hover:text-destructive"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
 
-              {/* Segment Content */}
-              <textarea
-                value={segment.content}
-                onChange={(e) => handleUpdateSegment(segment.id, 'content', e.target.value)}
-                placeholder={`Enter ${segment.type} content...`}
-                className="w-full h-32 p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              />
+                {/* Segment Content */}
+                <div className="space-y-2">
+                  <Textarea
+                    value={segment.content}
+                    onChange={(e) => handleUpdateSegment(segment.id, 'content', e.target.value)}
+                    placeholder={`Enter ${segment.type} content...`}
+                    className="min-h-[120px] resize-none"
+                  />
 
-              {/* Character count */}
-              <div className="flex justify-end mt-2">
-                <span className="text-xs text-gray-500">
-                  {segment.content.length} characters
-                </span>
-              </div>
-            </div>
+                  {/* Character count */}
+                  <div className="flex justify-end">
+                    <span className="text-xs text-muted-foreground">
+                      {segment.content.length} characters
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           ))
         )}
       </div>
 
       {/* Tips */}
       {segments.length > 0 && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h4 className="text-sm font-medium text-blue-900 mb-2">💡 Tips for Standard Prompts</h4>
-          <ul className="text-sm text-blue-800 space-y-1">
-            <li>• Start with a system segment to set the context and role</li>
-            <li>• Use instruction segments for specific tasks and requirements</li>
-            <li>• Add context segments for background information</li>
-            <li>• Include examples in assistant segments for better results</li>
-          </ul>
-        </div>
+        <Alert className="border-blue-200 bg-blue-50">
+          <MessageSquare className="h-4 w-4" />
+          <AlertDescription className="text-blue-800">
+            <div className="font-medium mb-2">💡 Tips for Standard Prompts</div>
+            <ul className="space-y-1 text-sm">
+              <li>• Start with a system segment to set the context and role</li>
+              <li>• Use instruction segments for specific tasks and requirements</li>
+              <li>• Add context segments for background information</li>
+              <li>• Include examples in assistant segments for better results</li>
+            </ul>
+          </AlertDescription>
+        </Alert>
       )}
     </div>
   );

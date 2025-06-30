@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react';
 import { Upload, X, FileText, Image, File } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface FileUploadProps {
   files: File[];
@@ -94,14 +95,31 @@ export function FileUpload({
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
+  const clearAllFiles = () => {
+    onFilesChange([]);
+  };
+
   return (
-    <div className="space-y-4">
+    <div className="w-full space-y-4">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="font-medium">Add Context Files</h3>
+          <p className="text-sm text-muted-foreground">Upload files to provide additional context</p>
+        </div>
+        {files.length > 0 && (
+          <Button variant="ghost" size="sm" onClick={clearAllFiles}>
+            Clear All
+          </Button>
+        )}
+      </div>
+
       {/* Upload Area */}
       <div
         className={`relative border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
           dragActive
-            ? 'border-indigo-500 bg-indigo-50'
-            : 'border-gray-300 hover:border-gray-400'
+            ? 'border-primary bg-primary/5'
+            : 'border-muted-foreground/25 hover:border-muted-foreground/50'
         }`}
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
@@ -116,49 +134,53 @@ export function FileUpload({
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
         />
         
-        <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-        <p className="text-sm text-gray-600 mb-1">
-          <span className="font-medium text-indigo-600">Click to upload</span> or drag and drop
+        <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+        <p className="text-sm text-foreground mb-1">
+          <span className="font-medium text-primary">Click to upload</span> or drag and drop
         </p>
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-muted-foreground">
           {acceptedTypes.join(', ')} up to {maxSize}MB each (max {maxFiles} files)
         </p>
       </div>
 
       {/* File List */}
       {files.length > 0 && (
-        <div className="space-y-2">
-          <h4 className="text-sm font-medium text-gray-700">Uploaded Files</h4>
-          <div className="space-y-2">
-            {files.map((file, index) => (
-              <div
-                key={index}
-                className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg border border-gray-200"
-              >
-                <div className="text-gray-500">
-                  {getFileIcon(file)}
-                </div>
-                
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">
-                    {file.name}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {formatFileSize(file.size)}
-                  </p>
-                </div>
-
-                <button
-                  onClick={() => removeFile(index)}
-                  className="text-gray-400 hover:text-red-600 transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+        <div className="space-y-2 max-h-48 overflow-y-auto">
+          {files.map((file, index) => (
+            <div
+              key={index}
+              className="flex items-center space-x-3 p-3 bg-muted/30 rounded-lg border"
+            >
+              <div className="text-muted-foreground">
+                {getFileIcon(file)}
               </div>
-            ))}
-          </div>
+              
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">
+                  {file.name}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {formatFileSize(file.size)}
+                </p>
+              </div>
+
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => removeFile(index)}
+                className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+          ))}
         </div>
       )}
+
+      {/* Stats */}
+      <div className="text-xs text-muted-foreground text-center">
+        {files.length} of {maxFiles} files uploaded
+      </div>
     </div>
   );
 }

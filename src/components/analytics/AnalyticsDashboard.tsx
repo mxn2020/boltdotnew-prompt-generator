@@ -2,37 +2,37 @@ import React from 'react';
 import { BarChart3, TrendingUp, Eye, Heart, GitFork, Users, Calendar, Star } from 'lucide-react';
 import { useUserAnalytics } from '../../hooks/useCommunity';
 import { cn } from '../../lib/utils';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface AnalyticsDashboardProps {
-  userId?: string;
   timePeriod?: string;
 }
 
-export function AnalyticsDashboard({ userId, timePeriod = '30 days' }: AnalyticsDashboardProps) {
+export function AnalyticsDashboard({ timePeriod = '30 days' }: AnalyticsDashboardProps) {
   const { data: analytics, isLoading } = useUserAnalytics(timePeriod);
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
+      <Card className="p-6">
         <div className="animate-pulse space-y-4">
-          <div className="h-6 bg-gray-200 rounded w-1/4"></div>
+          <div className="h-6 bg-muted rounded w-1/4"></div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-24 bg-gray-200 rounded"></div>
+              <div key={i} className="h-24 bg-muted rounded"></div>
             ))}
           </div>
         </div>
-      </div>
+      </Card>
     );
   }
 
   if (!analytics) {
     return (
-      <div className="bg-white rounded-xl border border-gray-200 p-6 text-center">
-        <BarChart3 className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">No Analytics Data</h3>
-        <p className="text-gray-600">Start creating prompts to see your analytics</p>
-      </div>
+      <Card className="p-6 text-center">
+        <BarChart3 className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+        <h3 className="text-lg font-semibold mb-2">No Analytics Data</h3>
+        <p className="text-muted-foreground">Start creating prompts to see your analytics</p>
+      </Card>
     );
   }
 
@@ -82,13 +82,13 @@ export function AnalyticsDashboard({ userId, timePeriod = '30 days' }: Analytics
   ];
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200">
+    <Card>
       {/* Header */}
-      <div className="p-6 border-b border-gray-200">
+      <CardHeader className="border-b">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">Analytics Dashboard</h2>
-            <p className="text-sm text-gray-600">
+            <CardTitle className="text-xl">Analytics Dashboard</CardTitle>
+            <p className="text-sm text-muted-foreground">
               Track your prompt performance and engagement over the last {timePeriod}
             </p>
           </div>
@@ -97,10 +97,10 @@ export function AnalyticsDashboard({ userId, timePeriod = '30 days' }: Analytics
             <span className="text-sm font-medium text-green-600">Growing</span>
           </div>
         </div>
-      </div>
+      </CardHeader>
 
       {/* Stats Grid */}
-      <div className="p-6">
+      <CardContent className="p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           {stats.map((stat, index) => (
             <StatCard key={index} {...stat} />
@@ -109,7 +109,7 @@ export function AnalyticsDashboard({ userId, timePeriod = '30 days' }: Analytics
 
         {/* Recent Activity */}
         <div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
+          <h3 className="text-lg font-semibold mb-4">Recent Activity</h3>
           {analytics.recent_activity && analytics.recent_activity.length > 0 ? (
             <div className="space-y-3">
               {analytics.recent_activity.slice(0, 10).map((activity, index) => (
@@ -117,14 +117,14 @@ export function AnalyticsDashboard({ userId, timePeriod = '30 days' }: Analytics
               ))}
             </div>
           ) : (
-            <div className="text-center py-8 bg-gray-50 rounded-lg">
-              <Calendar className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-              <p className="text-gray-600">No recent activity</p>
+            <div className="text-center py-8 bg-muted/50 rounded-lg">
+              <Calendar className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+              <p className="text-muted-foreground">No recent activity</p>
             </div>
           )}
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -138,17 +138,17 @@ interface StatCardProps {
 
 function StatCard({ label, value, icon: Icon, color, bgColor }: StatCardProps) {
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-4">
+    <Card className="p-4">
       <div className="flex items-center space-x-3">
         <div className={cn('p-2 rounded-lg', bgColor)}>
           <Icon className={cn('w-5 h-5', color)} />
         </div>
         <div>
-          <p className="text-sm font-medium text-gray-600">{label}</p>
-          <p className="text-2xl font-bold text-gray-900">{value}</p>
+          <p className="text-sm font-medium text-muted-foreground">{label}</p>
+          <p className="text-2xl font-bold">{value}</p>
         </div>
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -194,17 +194,17 @@ function ActivityItem({ activity }: ActivityItemProps) {
   const Icon = getEventIcon(activity.event_type);
 
   return (
-    <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-      <Icon className="w-4 h-4 text-gray-600" />
+    <div className="flex items-center space-x-3 p-3 bg-muted/50 rounded-lg">
+      <Icon className="w-4 h-4 text-muted-foreground" />
       <div className="flex-1">
-        <p className="text-sm font-medium text-gray-900">
+        <p className="text-sm font-medium">
           {getEventLabel(activity.event_type)}
         </p>
-        <p className="text-xs text-gray-600">
+        <p className="text-xs text-muted-foreground">
           {new Date(activity.date).toLocaleDateString()}
         </p>
       </div>
-      <span className="text-sm font-semibold text-gray-900">
+      <span className="text-sm font-semibold">
         {activity.count}
       </span>
     </div>

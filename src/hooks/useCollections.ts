@@ -16,6 +16,8 @@ export interface Collection {
   like_count: number;
   created_at: string;
   updated_at: string;
+  // Legacy field for compatibility
+  prompt_count?: number;
 }
 
 export interface CollectionItem {
@@ -28,23 +30,71 @@ export interface CollectionItem {
   added_at: string;
 }
 
-export function useCollections(parentId?: string) {
+export interface CreateCollectionData {
+  title: string;
+  description?: string;
+  parent_id?: string;
+  is_public?: boolean;
+  is_smart?: boolean;
+  smart_criteria?: any;
+}
+
+export interface CollectionsQueryParams {
+  search?: string;
+  parentId?: string;
+  isPublic?: boolean;
+}
+
+export function useCollections(params?: CollectionsQueryParams) {
   const { user } = useAuth();
+  const { search, parentId, isPublic } = params || {};
 
   return useQuery({
-    queryKey: ['collections', parentId, user?.id],
+    queryKey: ['collections', parentId, user?.id, search, isPublic],
     queryFn: async () => {
+      console.log('Fetching collections with params:', { parentId, search, isPublic, userId: user?.id });
+      
       if (!user) return [];
 
-      const { data, error } = await supabase.rpc('get_collection_tree', {
-        parent_collection_uuid: parentId || null,
-        target_user_id: user.id
-      });
+      let query = supabase
+        .from('collections')
+        .select('*')
+        .order('updated_at', { ascending: false });
+
+      // Apply filters
+      if (parentId) {
+        query = query.eq('parent_id', parentId);
+      } else {
+        query = query.is('parent_id', null);
+      }
+
+      if (isPublic !== undefined) {
+        query = query.eq('is_public', isPublic);
+      } else {
+        // Show user's collections and public collections
+        query = query.or(`user_id.eq.${user.id},is_public.eq.true`);
+      }
+
+      if (search) {
+        query = query.ilike('title', `%${search}%`);
+      }
+
+      const { data, error } = await query;
+
+      console.log('Collections query result:', { data, error });
 
       if (error) throw error;
-      return data as Collection[];
+      
+      // Ensure backward compatibility
+      const collections = (data || []).map(collection => ({
+        ...collection,
+        prompt_count: collection.item_count, // For backward compatibility
+      }));
+
+      return collections as Collection[];
     },
     enabled: !!user,
+    staleTime: 30000, // Cache for 30 seconds
   });
 }
 
@@ -52,6 +102,8 @@ export function useCollection(id: string) {
   return useQuery({
     queryKey: ['collection', id],
     queryFn: async () => {
+      if (!id) return null;
+
       const { data, error } = await supabase
         .from('collections')
         .select(`
@@ -103,14 +155,9 @@ export function useCreateCollection() {
   const { user } = useAuth();
 
   return useMutation({
-    mutationFn: async (collectionData: {
-      title: string;
-      description?: string;
-      parent_id?: string;
-      is_public?: boolean;
-      is_smart?: boolean;
-      smart_criteria?: any;
-    }) => {
+    mutationFn: async (collectionData: CreateCollectionData) => {
+      console.log('Creating collection:', collectionData);
+      
       if (!user) throw new Error('User not authenticated');
 
       const { data, error } = await supabase
@@ -118,16 +165,46 @@ export function useCreateCollection() {
         .insert({
           ...collectionData,
           user_id: user.id,
+          item_count: 0,
+          view_count: 0,
+          like_count: 0,
         })
         .select()
         .single();
 
+      console.log('Collection creation result:', { data, error });
+
       if (error) throw error;
-      return data as Collection;
+      
+      // Add prompt_count for backward compatibility
+      const collection = {
+        ...data,
+        prompt_count: data.item_count,
+      };
+
+      return collection as Collection;
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
+      console.log('Collection created successfully:', data);
+      
+      // Invalidate all relevant queries
       queryClient.invalidateQueries({ queryKey: ['collections'] });
+      
+      // If creating in a specific parent, invalidate that too
+      if (variables.parent_id) {
+        queryClient.invalidateQueries({ 
+          queryKey: ['collections', variables.parent_id] 
+        });
+      }
+
+      // Force immediate refetch of the main collections query
+      queryClient.refetchQueries({ 
+        queryKey: ['collections', variables.parent_id, undefined] // undefined for search param
+      });
     },
+    onError: (error) => {
+      console.error('Failed to create collection:', error);
+    }
   });
 }
 

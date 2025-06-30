@@ -2,8 +2,12 @@ import React from 'react';
 import { Search, Filter, TrendingUp, Star, Eye, Heart, GitFork, Clock, Users } from 'lucide-react';
 import { useTrendingPrompts, useRecommendedPrompts, useTogglePromptLike } from '../../hooks/useCommunity';
 import { PromptCard } from '../prompt/PromptCard';
-import { cn } from '../../lib/utils';
-import type { CommunityFilters, CommunitySortOptions } from '../../types/community';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface CommunityMarketplaceProps {
   onSelectPrompt?: (promptId: string) => void;
@@ -11,7 +15,6 @@ interface CommunityMarketplaceProps {
 
 export function CommunityMarketplace({ onSelectPrompt }: CommunityMarketplaceProps) {
   const [activeTab, setActiveTab] = React.useState<'trending' | 'recommended' | 'recent'>('trending');
-  const [filters, setFilters] = React.useState<CommunityFilters>({});
   const [searchQuery, setSearchQuery] = React.useState('');
   const [timePeriod, setTimePeriod] = React.useState('7 days');
 
@@ -21,7 +24,6 @@ export function CommunityMarketplace({ onSelectPrompt }: CommunityMarketplacePro
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    setFilters(prev => ({ ...prev, search: query || undefined }));
   };
 
   const handleLike = async (promptId: string) => {
@@ -71,19 +73,19 @@ export function CommunityMarketplace({ onSelectPrompt }: CommunityMarketplacePro
   };
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200">
+    <Card>
       {/* Header */}
-      <div className="p-6 border-b border-gray-200">
+      <CardHeader className="border-b">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">Community Marketplace</h2>
-            <p className="text-sm text-gray-600">
+            <CardTitle className="text-xl">Community Marketplace</CardTitle>
+            <p className="text-sm text-muted-foreground">
               Discover, share, and collaborate on amazing prompts from the community
             </p>
           </div>
           <div className="flex items-center space-x-2">
-            <Users className="w-5 h-5 text-indigo-600" />
-            <span className="text-sm font-medium text-gray-700">
+            <Users className="w-5 h-5 text-primary" />
+            <span className="text-sm font-medium">
               {(trendingPrompts?.length || 0) + (recommendedPrompts?.length || 0)} prompts
             </span>
           </div>
@@ -93,78 +95,83 @@ export function CommunityMarketplace({ onSelectPrompt }: CommunityMarketplacePro
         <div className="flex flex-col lg:flex-row gap-4">
           <div className="flex-1">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => handleSearch(e.target.value)}
                 placeholder="Search community prompts..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="pl-10"
               />
             </div>
           </div>
           
           <div className="flex items-center space-x-4">
-            <select
-              value={timePeriod}
-              onChange={(e) => setTimePeriod(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            >
-              <option value="1 day">Last 24 hours</option>
-              <option value="7 days">Last week</option>
-              <option value="30 days">Last month</option>
-              <option value="365 days">Last year</option>
-            </select>
+            <Select value={timePeriod} onValueChange={setTimePeriod}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Select time period" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1 day">Last 24 hours</SelectItem>
+                <SelectItem value="7 days">Last week</SelectItem>
+                <SelectItem value="30 days">Last month</SelectItem>
+                <SelectItem value="365 days">Last year</SelectItem>
+              </SelectContent>
+            </Select>
 
-            <button className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-              <Filter className="w-4 h-4" />
-              <span>Filters</span>
-            </button>
+            <Button variant="outline" size="sm">
+              <Filter className="w-4 h-4 mr-2" />
+              Filters
+            </Button>
           </div>
         </div>
-      </div>
+      </CardHeader>
 
       {/* Tabs */}
-      <div className="border-b border-gray-200">
-        <nav className="flex space-x-8 px-6">
+      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)}>
+        <TabsList className="w-full justify-start rounded-none border-b">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
-                className={cn(
-                  'py-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center space-x-2',
-                  activeTab === tab.id
-                    ? 'border-indigo-500 text-indigo-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                )}
-              >
+              <TabsTrigger key={tab.id} value={tab.id} className="flex items-center space-x-2">
                 <Icon className="w-4 h-4" />
                 <span>{tab.label}</span>
                 {tab.count > 0 && (
-                  <span className={cn(
-                    'px-2 py-1 rounded-full text-xs',
-                    activeTab === tab.id
-                      ? 'bg-indigo-100 text-indigo-600'
-                      : 'bg-gray-100 text-gray-600'
-                  )}>
+                  <Badge variant="secondary" className="ml-1">
                     {tab.count}
-                  </span>
+                  </Badge>
                 )}
-              </button>
+              </TabsTrigger>
             );
           })}
-        </nav>
-      </div>
+        </TabsList>
 
-      {/* Content */}
-      <div className="p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {renderPrompts()}
-        </div>
-      </div>
-    </div>
+        {/* Content */}
+        <TabsContent value="trending" className="mt-0">
+          <CardContent className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {activeTab === 'trending' && renderPrompts()}
+            </div>
+          </CardContent>
+        </TabsContent>
+        
+        <TabsContent value="recommended" className="mt-0">
+          <CardContent className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {activeTab === 'recommended' && renderPrompts()}
+            </div>
+          </CardContent>
+        </TabsContent>
+        
+        <TabsContent value="recent" className="mt-0">
+          <CardContent className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {activeTab === 'recent' && renderPrompts()}
+            </div>
+          </CardContent>
+        </TabsContent>
+      </Tabs>
+    </Card>
   );
 }
 
@@ -176,13 +183,13 @@ interface TrendingPromptCardProps {
 
 function TrendingPromptCard({ prompt, onSelect, onLike }: TrendingPromptCardProps) {
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-4 hover:border-indigo-200 transition-colors cursor-pointer">
+    <Card className="p-4 hover:border-primary/50 transition-colors cursor-pointer">
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1" onClick={onSelect}>
-          <h3 className="font-semibold text-gray-900 mb-1 hover:text-indigo-600 transition-colors">
+          <h3 className="font-semibold mb-1 hover:text-primary transition-colors">
             {prompt.title}
           </h3>
-          <p className="text-sm text-gray-600 line-clamp-2">{prompt.description}</p>
+          <p className="text-sm text-muted-foreground line-clamp-2">{prompt.description}</p>
         </div>
         <div className="flex items-center space-x-1 ml-2">
           <TrendingUp className="w-4 h-4 text-orange-500" />
@@ -193,20 +200,20 @@ function TrendingPromptCard({ prompt, onSelect, onLike }: TrendingPromptCardProp
       </div>
 
       <div className="flex flex-wrap gap-1 mb-3">
-        <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+        <Badge variant="secondary">
           {prompt.structure_type}
-        </span>
-        <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
+        </Badge>
+        <Badge variant="outline">
           {prompt.category}
-        </span>
+        </Badge>
         {prompt.tags.slice(0, 2).map((tag: string) => (
-          <span key={tag} className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs">
+          <Badge key={tag} variant="outline" className="text-xs">
             {tag}
-          </span>
+          </Badge>
         ))}
       </div>
 
-      <div className="flex items-center justify-between text-sm text-gray-500">
+      <div className="flex items-center justify-between text-sm text-muted-foreground">
         <div className="flex items-center space-x-3">
           <div className="flex items-center space-x-1">
             <Eye className="w-3 h-3" />
@@ -217,18 +224,20 @@ function TrendingPromptCard({ prompt, onSelect, onLike }: TrendingPromptCardProp
             <span>{prompt.fork_count}</span>
           </div>
         </div>
-        <button
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={(e) => {
             e.stopPropagation();
             onLike();
           }}
-          className="flex items-center space-x-1 text-gray-400 hover:text-red-500 transition-colors"
+          className="h-auto p-1 hover:text-red-500"
         >
-          <Heart className="w-4 h-4" />
+          <Heart className="w-4 h-4 mr-1" />
           <span>{prompt.like_count}</span>
-        </button>
+        </Button>
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -240,13 +249,13 @@ interface RecommendedPromptCardProps {
 
 function RecommendedPromptCard({ prompt, onSelect, onLike }: RecommendedPromptCardProps) {
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-4 hover:border-purple-200 transition-colors cursor-pointer">
+    <Card className="p-4 hover:border-purple-500/50 transition-colors cursor-pointer">
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1" onClick={onSelect}>
-          <h3 className="font-semibold text-gray-900 mb-1 hover:text-purple-600 transition-colors">
+          <h3 className="font-semibold mb-1 hover:text-purple-600 transition-colors">
             {prompt.title}
           </h3>
-          <p className="text-sm text-gray-600 line-clamp-2">{prompt.description}</p>
+          <p className="text-sm text-muted-foreground line-clamp-2">{prompt.description}</p>
         </div>
         <div className="flex items-center space-x-1 ml-2">
           <Star className="w-4 h-4 text-purple-500" />
@@ -257,20 +266,20 @@ function RecommendedPromptCard({ prompt, onSelect, onLike }: RecommendedPromptCa
       </div>
 
       <div className="flex flex-wrap gap-1 mb-3">
-        <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+        <Badge variant="secondary">
           {prompt.structure_type}
-        </span>
-        <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
+        </Badge>
+        <Badge variant="outline">
           {prompt.category}
-        </span>
+        </Badge>
         {prompt.tags.slice(0, 2).map((tag: string) => (
-          <span key={tag} className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs">
+          <Badge key={tag} variant="outline" className="text-xs">
             {tag}
-          </span>
+          </Badge>
         ))}
       </div>
 
-      <div className="flex items-center justify-between text-sm text-gray-500">
+      <div className="flex items-center justify-between text-sm text-muted-foreground">
         <div className="flex items-center space-x-3">
           <div className="flex items-center space-x-1">
             <Eye className="w-3 h-3" />
@@ -281,17 +290,19 @@ function RecommendedPromptCard({ prompt, onSelect, onLike }: RecommendedPromptCa
             <span>{prompt.fork_count}</span>
           </div>
         </div>
-        <button
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={(e) => {
             e.stopPropagation();
             onLike();
           }}
-          className="flex items-center space-x-1 text-gray-400 hover:text-red-500 transition-colors"
+          className="h-auto p-1 hover:text-red-500"
         >
-          <Heart className="w-4 h-4" />
+          <Heart className="w-4 h-4 mr-1" />
           <span>{prompt.like_count}</span>
-        </button>
+        </Button>
       </div>
-    </div>
+    </Card>
   );
 }

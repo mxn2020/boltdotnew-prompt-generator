@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { 
@@ -11,17 +11,36 @@ import {
   Library,
   BarChart3,
   Sparkles,
-  CreditCard
+  CreditCard,
+  Menu,
+  X
 } from 'lucide-react';
-import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "../ui/dropdown-menu";
+import { Button } from "../ui/button";
+import { Sheet, SheetClose, SheetContent, SheetTrigger } from "../ui/sheet";
+import { Badge } from "../ui/badge";
 import { CreditsDisplay } from '../payment/CreditsDisplay';
 import { useSubscriptionInfo } from '../../hooks/usePayment';
-import { cn } from '../../lib/utils';
+
+const navigation = [
+  { name: 'Studio', href: '/studio', icon: Sparkles },
+  { name: 'Editor', href: '/editor', icon: Plus },
+  { name: 'Explorer', href: '/explorer', icon: Search },
+  { name: 'Library', href: '/library', icon: Library },
+  { name: 'Analytics', href: '/analytics', icon: BarChart3 },
+];
 
 export function Header() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const { data: subscriptionInfo } = useSubscriptionInfo();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
@@ -29,151 +48,180 @@ export function Header() {
   };
 
   return (
-    <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          {/* Logo and Brand */}
-          <div className="flex items-center space-x-8">
-            <Link to="/" className="flex items-center space-x-2">
-              <Zap className="w-8 h-8 text-indigo-600" />
-              <span className="text-xl font-bold text-gray-900">PromptCraft</span>
-            </Link>
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container mx-auto flex h-16 items-center justify-between px-4">
+        {/* Logo and Brand */}
+        <div className="flex items-center space-x-8">
+          <Link to="/" className="flex items-center space-x-2">
+            <Zap className="h-8 w-8 text-primary" />
+            <span className="text-xl font-bold">PromptCraft</span>
+          </Link>
 
-            {/* Navigation */}
-            {user && (
-              <nav className="hidden md:flex space-x-6">
-                <Link
-                  to="/studio"
-                  className="flex items-center space-x-1 text-gray-700 hover:text-indigo-600 transition-colors"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  <span>Studio</span>
-                </Link>
-                <Link
-                  to="/editor"
-                  className="flex items-center space-x-1 text-gray-700 hover:text-indigo-600 transition-colors"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Editor</span>
-                </Link>
-                <Link
-                  to="/explorer"
-                  className="flex items-center space-x-1 text-gray-700 hover:text-indigo-600 transition-colors"
-                >
-                  <Search className="w-4 h-4" />
-                  <span>Explorer</span>
-                </Link>
-                <Link
-                  to="/library"
-                  className="flex items-center space-x-1 text-gray-700 hover:text-indigo-600 transition-colors"
-                >
-                  <Library className="w-4 h-4" />
-                  <span>Library</span>
-                </Link>
-                <Link
-                  to="/analytics"
-                  className="flex items-center space-x-1 text-gray-700 hover:text-indigo-600 transition-colors"
-                >
-                  <BarChart3 className="w-4 h-4" />
-                  <span>Analytics</span>
-                </Link>
-              </nav>
-            )}
-          </div>
+          {/* Desktop Navigation */}
+          {user && (
+            <nav className="hidden md:flex items-center space-x-1">
+              {navigation.map((item) => (
+                <Button key={item.name} variant="ghost" asChild className="h-9">
+                  <Link to={item.href} className="flex items-center space-x-2">
+                    <item.icon className="h-4 w-4" />
+                    <span>{item.name}</span>
+                  </Link>
+                </Button>
+              ))}
+            </nav>
+          )}
+        </div>
 
-          {/* User Menu */}
-          <div className="flex items-center space-x-4">
-            {/* Credits Display */}
-            {user && subscriptionInfo?.can_use_ai && (
-              <div className="hidden md:block">
-                <CreditsDisplay compact={true} />
-              </div>
-            )}
+        {/* Right side */}
+        <div className="flex items-center space-x-4">
+          {/* Credits Display */}
+          {user && subscriptionInfo?.can_use_ai && (
+            <div className="hidden md:block">
+              <CreditsDisplay compact={true} />
+            </div>
+          )}
 
-            {user ? (
-              <DropdownMenu.Root>
-                <DropdownMenu.Trigger asChild>
-                  <button className="flex items-center space-x-2 text-gray-700 hover:text-gray-900 transition-colors">
-                    <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
-                      <User className="w-4 h-4 text-indigo-600" />
-                    </div>
-                    <span className="hidden sm:block text-sm font-medium">
-                      {user.user_metadata?.full_name || user.email}
-                    </span>
-                  </button>
-                </DropdownMenu.Trigger>
-
-                <DropdownMenu.Portal>
-                  <DropdownMenu.Content
-                    className="min-w-[200px] bg-white rounded-lg shadow-lg border border-gray-200 p-1 z-50"
-                    sideOffset={5}
-                  >
-                    {/* Credits for mobile */}
-                    <div className="md:hidden p-3 border-b border-gray-200">
-                      <CreditsDisplay compact={true} />
-                    </div>
-
-                    <DropdownMenu.Item asChild>
-                      <Link
-                        to="/profile"
-                        className="flex items-center space-x-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md cursor-pointer"
-                      >
-                        <User className="w-4 h-4" />
-                        <span>Profile</span>
-                      </Link>
-                    </DropdownMenu.Item>
-                    
-                    <DropdownMenu.Item asChild>
-                      <Link
-                        to="/settings"
-                        className="flex items-center space-x-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md cursor-pointer"
-                      >
-                        <Settings className="w-4 h-4" />
-                        <span>Settings</span>
-                      </Link>
-                    </DropdownMenu.Item>
-
-                    {subscriptionInfo?.plan_type !== 'max' && (
-                      <DropdownMenu.Item asChild>
-                        <Link
-                          to="/settings?tab=billing"
-                          className="flex items-center space-x-2 px-3 py-2 text-sm text-indigo-600 hover:bg-indigo-50 rounded-md cursor-pointer"
-                        >
-                          <CreditCard className="w-4 h-4" />
-                          <span>Upgrade Plan</span>
-                        </Link>
-                      </DropdownMenu.Item>
+          {user ? (
+            <>
+              {/* Mobile Menu */}
+              <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon" className="md:hidden">
+                    <Menu className="h-5 w-5" />
+                    <span className="sr-only">Open menu</span>
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="w-72">
+                  {/* Accessibility: DialogTitle and Description for SheetContent */}
+                  <h2 className="sr-only">Main Menu</h2>
+                  <p className="sr-only" id="main-menu-desc">Navigation and user options</p>
+                  <div className="flex flex-col space-y-4">
+                    {/* Mobile Credits */}
+                    {subscriptionInfo?.can_use_ai && (
+                      <div className="border-b pb-4">
+                        <CreditsDisplay compact={true} />
+                      </div>
                     )}
+                    
+                    {/* Mobile Navigation */}
+                    <nav className="flex flex-col space-y-2">
+                      {navigation.map((item) => (
+                        <SheetClose asChild key={item.name}>
+                          <Button variant="ghost" asChild className="justify-start h-12">
+                            <Link to={item.href} className="flex items-center space-x-3">
+                              <item.icon className="h-5 w-5" />
+                              <span>{item.name}</span>
+                            </Link>
+                          </Button>
+                        </SheetClose>
+                      ))}
+                    </nav>
 
-                    <DropdownMenu.Separator className="h-px bg-gray-200 my-1" />
+                    {/* Mobile User Menu */}
+                    <div className="border-t pt-4 space-y-2">
+                      <SheetClose asChild>
+                        <Button variant="ghost" asChild className="justify-start h-12">
+                          <Link to="/profile" className="flex items-center space-x-3">
+                            <User className="h-5 w-5" />
+                            <span>Profile</span>
+                          </Link>
+                        </Button>
+                      </SheetClose>
+                      <SheetClose asChild>
+                        <Button variant="ghost" asChild className="justify-start h-12">
+                          <Link to="/settings" className="flex items-center space-x-3">
+                            <Settings className="h-5 w-5" />
+                            <span>Settings</span>
+                          </Link>
+                        </Button>
+                      </SheetClose>
+                      {subscriptionInfo?.plan_type !== 'max' && (
+                        <SheetClose asChild>
+                          <Button variant="ghost" asChild className="justify-start h-12 text-primary">
+                            <Link to="/settings?tab=billing" className="flex items-center space-x-3">
+                              <CreditCard className="h-5 w-5" />
+                              <span>Upgrade Plan</span>
+                              <Badge variant="secondary" className="ml-auto">New</Badge>
+                            </Link>
+                          </Button>
+                        </SheetClose>
+                      )}
+                      <Button 
+                        variant="ghost" 
+                        className="justify-start h-12 text-destructive hover:text-destructive"
+                        onClick={handleSignOut}
+                      >
+                        <LogOut className="h-5 w-5 mr-3" />
+                        <span>Sign Out</span>
+                      </Button>
+                    </div>
+                  </div>
+                </SheetContent>
+              </Sheet>
 
-                    <DropdownMenu.Item
-                      onClick={handleSignOut}
-                      className="flex items-center space-x-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md cursor-pointer"
-                    >
-                      <LogOut className="w-4 h-4" />
-                      <span>Sign Out</span>
-                    </DropdownMenu.Item>
-                  </DropdownMenu.Content>
-                </DropdownMenu.Portal>
-              </DropdownMenu.Root>
-            ) : (
-              <div className="flex items-center space-x-4">
-                <Link
-                  to="/login"
-                  className="text-gray-700 hover:text-gray-900 transition-colors"
-                >
-                  Sign In
-                </Link>
-                <Link
-                  to="/register"
-                  className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
-                >
-                  Get Started
-                </Link>
-              </div>
-            )}
-          </div>
+              {/* Desktop User Menu */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                      <User className="h-4 w-4 text-primary" />
+                    </div>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end" forceMount>
+                  <div className="flex items-center justify-start gap-2 p-2">
+                    <div className="flex flex-col space-y-1 leading-none">
+                      <p className="font-medium text-sm">
+                        {user.user_metadata?.full_name || user.email}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {user.email}
+                      </p>
+                    </div>
+                  </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/profile" className="cursor-pointer">
+                      <User className="mr-2 h-4 w-4" />
+                      <span>Profile</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/settings" className="cursor-pointer">
+                      <Settings className="mr-2 h-4 w-4" />
+                      <span>Settings</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  {subscriptionInfo?.plan_type !== 'max' && (
+                    <DropdownMenuItem asChild>
+                      <Link to="/settings?tab=billing" className="cursor-pointer text-primary">
+                        <CreditCard className="mr-2 h-4 w-4" />
+                        <span>Upgrade Plan</span>
+                        <Badge variant="secondary" className="ml-auto">New</Badge>
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    className="cursor-pointer text-destructive focus:text-destructive"
+                    onClick={handleSignOut}
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Sign Out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>
+          ) : (
+            <div className="flex items-center space-x-2">
+              <Button variant="ghost" asChild>
+                <Link to="/login">Sign In</Link>
+              </Button>
+              <Button asChild>
+                <Link to="/register">Get Started</Link>
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </header>
