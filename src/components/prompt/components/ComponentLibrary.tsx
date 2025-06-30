@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Filter, Plus, Star, Download, Eye, Heart } from 'lucide-react';
+import { Search, Filter, Plus, Star, Download, Eye, Heart, Edit } from 'lucide-react';
 import { useComponents, useCreateComponent, useRateComponent } from '../../../hooks/useComponents';
 import { cn } from '../../../lib/utils';
 import { useNavigate } from 'react-router-dom';
