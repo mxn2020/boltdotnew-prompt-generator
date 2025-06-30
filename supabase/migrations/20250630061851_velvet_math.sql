@@ -1,5 +1,5 @@
 /*
-  # Database Functions for PromptCraft Platform
+  # Database Functions for PromptVerse Platform
 
   1. Functions
     - `increment_version_batch` - Auto-increment batch version on prompt updates

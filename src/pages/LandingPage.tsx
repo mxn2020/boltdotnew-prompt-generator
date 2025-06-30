@@ -161,7 +161,7 @@ export function LandingPage() {
            Ready to revolutionize your prompt engineering?
          </h2>
          <p className="text-lg sm:text-xl text-primary-foreground/90 mb-8 max-w-2xl mx-auto">
-           Join thousands of developers and AI engineers building better prompts with PromptCraft.
+           Join thousands of developers and AI engineers building better prompts with PromptVerse.
          </p>
          <Button asChild size="lg" variant="secondary">
            <Link to="/register" className="flex items-center justify-center gap-2">

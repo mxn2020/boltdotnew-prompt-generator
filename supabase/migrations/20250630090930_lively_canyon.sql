@@ -1,5 +1,5 @@
 /*
-  # Community Functions for PromptCraft Platform
+  # Community Functions for PromptVerse Platform
 
   1. Functions
     - Community interaction functions (like, rate, follow)

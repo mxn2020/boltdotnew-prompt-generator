@@ -55,7 +55,7 @@ export function Header() {
           <div className="flex items-center">
             <Link to="/" className="flex items-center space-x-2">
               <Zap className="h-8 w-8 text-primary" />
-              <span className="text-xl font-bold">PromptCraft</span>
+              <span className="text-xl font-bold">PromptVerse</span>
             </Link>
           </div>
 

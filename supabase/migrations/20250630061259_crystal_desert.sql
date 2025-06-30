@@ -1,5 +1,5 @@
 /*
-  # Initial Database Schema for PromptCraft Platform
+  # Initial Database Schema for PromptVerse Platform
 
   1. New Tables
     - `profiles` - User profile information and preferences

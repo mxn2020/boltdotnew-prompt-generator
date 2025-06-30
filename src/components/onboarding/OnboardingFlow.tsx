@@ -115,7 +115,7 @@ export function OnboardingFlow({ onComplete, onSkip }: OnboardingFlowProps) {
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Welcome to PromptCraft</h1>
+              <h1 className="text-2xl font-bold text-gray-900">Welcome to PromptVerse</h1>
               <p className="text-gray-600">Let's get you set up in just a few steps</p>
             </div>
             {onSkip && (
@@ -214,7 +214,7 @@ function WelcomeStep() {
         Welcome to the Future of Prompt Engineering
       </h2>
       <p className="text-lg text-gray-600 max-w-2xl mx-auto mb-8">
-        PromptCraft is a professional platform for creating, managing, and optimizing AI prompts. 
+        PromptVerse is a professional platform for creating, managing, and optimizing AI prompts. 
         Whether you're a developer, content creator, or AI enthusiast, we'll help you build better prompts faster.
       </p>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl mx-auto">
@@ -363,7 +363,7 @@ function GoalsStep({ formData, setFormData }: StepProps) {
       <div className="space-y-6">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-3">
-            What do you want to achieve with PromptCraft? (Select all that apply)
+            What do you want to achieve with PromptVerse? (Select all that apply)
           </label>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {goals.map((goal) => (
@@ -432,7 +432,7 @@ function CompleteStep({ formData }: { formData: any }) {
         You're all set!
       </h2>
       <p className="text-lg text-gray-600 max-w-2xl mx-auto mb-8">
-        Welcome to PromptCraft! Based on your preferences, we've customized your experience. 
+        Welcome to PromptVerse! Based on your preferences, we've customized your experience. 
         You can always change your settings later.
       </p>
       
