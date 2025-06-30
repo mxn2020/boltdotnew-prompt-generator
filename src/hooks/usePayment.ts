@@ -55,41 +55,50 @@ export function useCredits() {
 }
 
 export function useSubscriptionInfo() {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
 
   return useQuery({
     queryKey: ['subscription-info', user?.id],
     queryFn: async () => {
-      if (!user) throw new Error('User not authenticated');
+      if (!user || !session) throw new Error('User not authenticated');
 
-      const { data, error } = await supabase.rpc('get_user_subscription_info');
+      const { data, error } = await supabase.functions.invoke('manage-credits', {
+        body: { action: 'get_subscription_info' },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
 
       if (error) throw error;
-      return data[0] as SubscriptionInfo;
+      return data.subscription as SubscriptionInfo;
     },
-    enabled: !!user,
+    enabled: !!user && !!session,
   });
 }
 
 export function useCreditTransactions() {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
 
   return useQuery({
     queryKey: ['credit-transactions', user?.id],
     queryFn: async () => {
-      if (!user) throw new Error('User not authenticated');
+      if (!user || !session) throw new Error('User not authenticated');
 
-      const { data, error } = await supabase
-        .from('credit_transactions')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(50);
+      const { data, error } = await supabase.functions.invoke('manage-credits', {
+        body: { 
+          action: 'get_credit_history',
+          limit: 50,
+          offset: 0
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
 
       if (error) throw error;
-      return data as CreditTransaction[];
+      return data.transactions as CreditTransaction[];
     },
-    enabled: !!user,
+    enabled: !!user && !!session,
   });
 }
 
@@ -116,24 +125,27 @@ export function usePaymentTransactions() {
 }
 
 export function useAIUsageLogs() {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
 
   return useQuery({
     queryKey: ['ai-usage-logs', user?.id],
     queryFn: async () => {
-      if (!user) throw new Error('User not authenticated');
+      if (!user || !session) throw new Error('User not authenticated');
 
-      const { data, error } = await supabase
-        .from('ai_usage_logs')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(50);
+      const { data, error } = await supabase.functions.invoke('manage-credits', {
+        body: { 
+          action: 'get_usage_stats',
+          days: 30
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
 
       if (error) throw error;
-      return data as AIUsageLog[];
+      return data.usage_logs as AIUsageLog[];
     },
-    enabled: !!user,
+    enabled: !!user && !!session,
   });
 }
 
@@ -160,14 +172,20 @@ export function useOnboardingProgress() {
 
 export function useInitializeUserSubscription() {
   const queryClient = useQueryClient();
+  const { session } = useAuth();
 
   return useMutation({
     mutationFn: async (userId: string) => {
-      const { error } = await supabase.rpc('initialize_user_subscription', {
-        target_user_id: userId
+      if (!session) throw new Error('User not authenticated');
+
+      const { data, error } = await supabase.functions.invoke('initialize-user', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
       });
 
       if (error) throw error;
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['subscription'] });
@@ -198,25 +216,34 @@ export function useUpdateOnboardingProgress() {
 }
 
 export function useCheckCredits() {
+  const { session } = useAuth();
+
   return useMutation({
-    mutationFn: async ({ userId, requiredCredits }: { userId: string; requiredCredits: number }) => {
-      const { data, error } = await supabase.rpc('check_user_credits', {
-        target_user_id: userId,
-        required_credits: requiredCredits
+    mutationFn: async ({ requiredCredits }: { requiredCredits: number }) => {
+      if (!session) throw new Error('User not authenticated');
+
+      const { data, error } = await supabase.functions.invoke('manage-credits', {
+        body: { 
+          action: 'check_credits', 
+          required_credits: requiredCredits 
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
       });
 
       if (error) throw error;
-      return data as boolean;
+      return data.has_sufficient_credits as boolean;
     },
   });
 }
 
 export function useDeductCredits() {
   const queryClient = useQueryClient();
+  const { session } = useAuth();
 
   return useMutation({
     mutationFn: async (params: {
-      userId: string;
       featureType: string;
       provider: string;
       model: string;
@@ -228,22 +255,29 @@ export function useDeductCredits() {
       success?: boolean;
       errorMessage?: string;
     }) => {
-      const { data, error } = await supabase.rpc('deduct_credits', {
-        target_user_id: params.userId,
-        feature_type_param: params.featureType,
-        provider_param: params.provider,
-        model_param: params.model,
-        prompt_length_param: params.promptLength,
-        base_cost_param: params.baseCost,
-        multiplier_param: params.multiplier,
-        total_cost_param: params.totalCost,
-        prompt_id_param: params.promptId,
-        success_param: params.success ?? true,
-        error_message_param: params.errorMessage
+      if (!session) throw new Error('User not authenticated');
+
+      const { data, error } = await supabase.functions.invoke('manage-credits', {
+        body: {
+          action: 'deduct_credits',
+          feature_type: params.featureType,
+          provider: params.provider,
+          model: params.model,
+          prompt_length: params.promptLength,
+          base_cost: params.baseCost,
+          multiplier: params.multiplier,
+          total_cost: params.totalCost,
+          prompt_id: params.promptId,
+          success: params.success ?? true,
+          error_message: params.errorMessage
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
       });
 
       if (error) throw error;
-      return data as boolean;
+      return data.success as boolean;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['credits'] });
@@ -256,23 +290,30 @@ export function useDeductCredits() {
 
 export function useAddCredits() {
   const queryClient = useQueryClient();
+  const { session } = useAuth();
 
   return useMutation({
     mutationFn: async (params: {
-      userId: string;
       amount: number;
       transactionType?: string;
       description?: string;
     }) => {
-      const { data, error } = await supabase.rpc('add_credits', {
-        target_user_id: params.userId,
-        amount_param: params.amount,
-        transaction_type_param: params.transactionType || 'earned',
-        description_param: params.description || 'Credits added'
+      if (!session) throw new Error('User not authenticated');
+
+      const { data, error } = await supabase.functions.invoke('manage-credits', {
+        body: {
+          action: 'add_credits',
+          amount: params.amount,
+          transaction_type: params.transactionType || 'earned',
+          description: params.description || 'Credits added'
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
       });
 
       if (error) throw error;
-      return data as number;
+      return data.new_balance as number;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['credits'] });

@@ -15,6 +15,15 @@ export async function createStripeCheckoutSession({
   customerId
 }: CreateCheckoutSessionParams) {
   try {
+    // Get the current session to ensure user is authenticated
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    
+    if (sessionError || !session) {
+      throw new Error('User not authenticated. Please log in and try again.');
+    }
+
+    console.log('Creating checkout session for user:', session.user.email);
+
     // Call your Supabase edge function to create checkout session
     const { data, error } = await supabase.functions.invoke('create-stripe-checkout', {
       body: {
@@ -22,13 +31,25 @@ export async function createStripeCheckoutSession({
         successUrl,
         cancelUrl,
         customerId
-      }
+      },
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+      },
     });
 
-    if (error) throw error;
+    if (error) {
+      console.error('Edge function error:', error);
+      throw error;
+    }
+
+    if (!data?.sessionId) {
+      throw new Error('No session ID returned from checkout creation');
+    }
 
     const stripe = await stripePromise;
     if (!stripe) throw new Error('Stripe failed to load');
+
+    console.log('Redirecting to Stripe checkout:', data.sessionId);
 
     // Redirect to Stripe checkout
     const { error: stripeError } = await stripe.redirectToCheckout({
@@ -44,11 +65,32 @@ export async function createStripeCheckoutSession({
 
 export async function createStripePortalSession() {
   try {
+    // Get the current session to ensure user is authenticated
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    
+    if (sessionError || !session) {
+      throw new Error('User not authenticated. Please log in and try again.');
+    }
+
+    console.log('Creating portal session for user:', session.user.email);
+
     const { data, error } = await supabase.functions.invoke('create-stripe-portal', {
-      body: {}
+      body: {},
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+      },
     });
 
-    if (error) throw error;
+    if (error) {
+      console.error('Portal function error:', error);
+      throw error;
+    }
+
+    if (!data?.url) {
+      throw new Error('No portal URL returned');
+    }
+
+    console.log('Redirecting to Stripe portal:', data.url);
 
     // Redirect to customer portal
     window.location.href = data.url;

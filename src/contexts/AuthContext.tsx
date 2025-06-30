@@ -2,7 +2,6 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { ensureUserProfile } from '../lib/profile';
-import { useInitializeUserSubscription } from '../hooks/usePayment';
 
 interface AuthContextType {
   user: User | null;
@@ -28,7 +27,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const initializeSubscription = useInitializeUserSubscription();
+
+  // Function to initialize subscription without using useAuth hook
+  const initializeSubscription = async (userId: string) => {
+    try {
+      const { data, error } = await supabase.rpc('initialize_user_subscription', {
+        target_user_id: userId
+      });
+      
+      if (error) {
+        console.error('Failed to initialize user subscription:', error);
+        return;
+      }
+      
+      console.log('User subscription initialized:', data);
+    } catch (error) {
+      console.error('Error initializing subscription:', error);
+    }
+  };
 
   useEffect(() => {
     // Get initial session
@@ -38,7 +54,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       // Initialize subscription for existing user
       if (session?.user) {
-        initializeSubscription.mutate(session.user.id);
+        initializeSubscription(session.user.id);
       }
       
       setLoading(false);
@@ -53,7 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       // Initialize subscription for new user
       if (event === 'SIGNED_IN' && session?.user) {
-        initializeSubscription.mutate(session.user.id);
+        initializeSubscription(session.user.id);
       }
       
       setLoading(false);
@@ -89,7 +105,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       
       // Initialize subscription and credits
-      initializeSubscription.mutate(data.user.id);
+      initializeSubscription(data.user.id);
     }
 
     return { error };
