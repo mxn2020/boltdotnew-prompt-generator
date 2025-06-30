@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, GripVertical, X, Folder, FileText, ChevronDown, ChevronRight } from 'lucide-react';
+import { Plus, GripVertical, X, Folder, FileText, ChevronDown, ChevronRight, Code } from 'lucide-react';
 import { usePromptStore } from '../../../stores/promptStore';
 import { ModuleComposer } from '../components/ModuleComposer';
 import { AssetIntegrator } from '../components/AssetIntegrator';
@@ -11,7 +11,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription } from "@/components/ui/alert"; 
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export function AdvancedBlockEditor() {
   const { 
@@ -122,7 +123,13 @@ function AdvancedBlockItem({ block, onUpdate, onRemove }: AdvancedBlockItemProps
   const updateModuleInBlock = (moduleId: string, updates: any) => {
     const updatedModules = block.modules.map(module =>
       module.id === moduleId ? { ...module, ...updates } : module
-    );
+    ); 
+    
+    // If we're updating wrappers, make sure it's an array
+    if (updates.wrappers && !Array.isArray(updates.wrappers)) {
+      updates.wrappers = [updates.wrappers].filter(Boolean);
+    }
+    
     onUpdate(block.id, 'modules', updatedModules);
   };
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, GripVertical, X, Settings } from 'lucide-react';
+import { Plus, GripVertical, X, Settings, Code } from 'lucide-react';
 import { usePromptStore } from '../../../stores/promptStore';
 import type { PromptModule } from '../../../types/prompt';
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription } from "@/components/ui/alert"; 
+import { Badge } from "@/components/ui/badge";
 
 export function ModuleEditor() {
   const { 
@@ -176,22 +177,72 @@ function ModuleItem({ module, onUpdate, onRemove }: ModuleItemProps) {
 
           {/* Wrapper Selection */}
           <div className="space-y-2">
-            <Label htmlFor={`wrapper-${module.id}`}>Processing Wrapper</Label>
-            <Select
-              value={module.wrapper_id || ''}
-              onValueChange={(value) => onUpdate(module.id, 'wrapper_id', value || undefined)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="No wrapper" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="no_wrapper">No wrapper</SelectItem>
-                <SelectItem value="format-json">Format as JSON</SelectItem>
-                <SelectItem value="format-list">Format as List</SelectItem>
-                <SelectItem value="validate-input">Validate Input</SelectItem>
-                <SelectItem value="custom">Custom Wrapper</SelectItem>
-              </SelectContent>
-            </Select>
+            <Label htmlFor={`wrapper-${module.id}`}>Processing Wrappers</Label>
+            <div className="space-y-3">
+              <div className="flex flex-wrap gap-2">
+                {(module.wrappers || []).length > 0 ? (
+                  (module.wrappers || []).map((wrapper) => (
+                    <Badge 
+                      key={wrapper} 
+                      variant="secondary" 
+                      className="flex items-center gap-1 bg-blue-100 text-blue-700 border-blue-200"
+                    >
+                      <Code className="w-3 h-3" />
+                      <span>{wrapper}</span>
+                      <button 
+                        onClick={() => {
+                          const updatedWrappers = (module.wrappers || []).filter(w => w !== wrapper);
+                          onUpdate(module.id, 'wrappers', updatedWrappers);
+                        }}
+                        className="text-blue-700 hover:text-blue-900"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </Badge>
+                  ))
+                ) : (
+                  <div className="text-sm text-muted-foreground">No wrappers applied</div>
+                )}
+              </div>
+              
+              <div className="flex gap-2">
+                <Select
+                  onValueChange={(value) => {
+                    if (value && value !== 'no_wrapper') {
+                      const currentWrappers = module.wrappers || [];
+                      if (!currentWrappers.includes(value)) {
+                        onUpdate(module.id, 'wrappers', [...currentWrappers, value]);
+                      }
+                    }
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Add wrapper" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="no_wrapper">No wrapper</SelectItem>
+                    <SelectItem value="format-json">Format as JSON</SelectItem>
+                    <SelectItem value="format-list">Format as List</SelectItem>
+                    <SelectItem value="format-table">Format as Table</SelectItem>
+                    <SelectItem value="validate-input">Validate Input</SelectItem>
+                    <SelectItem value="transform-data">Transform Data</SelectItem>
+                    <SelectItem value="conditional-logic">Conditional Logic</SelectItem>
+                    <SelectItem value="error-handling">Error Handling</SelectItem>
+                    <SelectItem value="format-markdown">Format as Markdown</SelectItem>
+                    <SelectItem value="format-yaml">Format as YAML</SelectItem>
+                    <SelectItem value="format-xml">Format as XML</SelectItem>
+                    <SelectItem value="format-csv">Format as CSV</SelectItem>
+                    <SelectItem value="summarize">Summarize Content</SelectItem>
+                    <SelectItem value="translate">Translate Content</SelectItem>
+                    <SelectItem value="custom">Custom Wrapper</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <p className="text-xs text-muted-foreground">
+                Wrappers are applied in sequence, from first to last
+              </p>
+            </div>
           </div>
 
           {/* Configuration */}

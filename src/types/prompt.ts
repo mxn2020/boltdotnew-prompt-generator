@@ -60,7 +60,7 @@ export interface PromptModule {
   title: string;
   description?: string;
   content: string;
-  wrapper_id?: string;
+  wrappers?: string[];
   config?: Record<string, any>;
   order: number;
 }

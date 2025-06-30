@@ -1,7 +1,9 @@
 import React from 'react';
-import { GripVertical, X, Settings, Code, Layers } from 'lucide-react';
+import { GripVertical, X, Settings, Code, Layers, Plus, Tag } from 'lucide-react';
 import { cn } from '../../../lib/utils';
 import type { PromptModule } from '../../../types/prompt';
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 interface ModuleComposerProps {
   module: PromptModule;
@@ -11,21 +13,54 @@ interface ModuleComposerProps {
 }
 
 const wrapperTypes = [
-  { value: '', label: 'No wrapper', description: 'Use module content as-is' },
+  { value: 'no_wrapper', label: 'No wrapper', description: 'Use module content as-is' },
   { value: 'format-json', label: 'Format as JSON', description: 'Structure output as JSON' },
   { value: 'format-list', label: 'Format as List', description: 'Present as bulleted list' },
   { value: 'format-table', label: 'Format as Table', description: 'Organize in table format' },
   { value: 'validate-input', label: 'Validate Input', description: 'Add input validation logic' },
   { value: 'transform-data', label: 'Transform Data', description: 'Apply data transformations' },
   { value: 'conditional-logic', label: 'Conditional Logic', description: 'Add conditional processing' },
+  { value: 'error-handling', label: 'Error Handling', description: 'Add error handling logic' },
+  { value: 'format-markdown', label: 'Format as Markdown', description: 'Structure output as Markdown' },
+  { value: 'format-yaml', label: 'Format as YAML', description: 'Structure output as YAML' },
+  { value: 'format-xml', label: 'Format as XML', description: 'Structure output as XML' },
+  { value: 'format-csv', label: 'Format as CSV', description: 'Structure output as CSV' },
+  { value: 'summarize', label: 'Summarize Content', description: 'Create a summary of the content' },
+  { value: 'translate', label: 'Translate Content', description: 'Translate content to another language' },
   { value: 'custom', label: 'Custom Wrapper', description: 'Define custom processing logic' },
 ];
 
 export function ModuleComposer({ module, onUpdate, onRemove, compact = false }: ModuleComposerProps) {
   const [showConfig, setShowConfig] = React.useState(false);
   const [showWrapper, setShowWrapper] = React.useState(false);
+  const [selectedWrapper, setSelectedWrapper] = React.useState('');
 
-  const selectedWrapper = wrapperTypes.find(w => w.value === (module.wrapper_id || ''));
+  // Initialize wrappers array if it doesn't exist
+  const wrappers = module.wrappers || [];
+  
+  const handleAddWrapper = () => {
+    if (!selectedWrapper || selectedWrapper === 'no_wrapper') return;
+    
+    // Don't add duplicates
+    if (wrappers.includes(selectedWrapper)) return;
+    
+    // Update wrappers array
+    const updatedWrappers = [...wrappers, selectedWrapper];
+    onUpdate({ wrappers: updatedWrappers });
+    
+    // Reset selection
+    setSelectedWrapper('');
+  };
+  
+  const handleRemoveWrapper = (wrapper: string) => {
+    const updatedWrappers = wrappers.filter(w => w !== wrapper);
+    onUpdate({ wrappers: updatedWrappers });
+  };
+  
+  const getWrapperLabel = (wrapperId: string) => {
+    const wrapper = wrapperTypes.find(w => w.value === wrapperId);
+    return wrapper?.label || wrapperId;
+  };
 
   return (
     <div className={cn(
@@ -53,16 +88,29 @@ export function ModuleComposer({ module, onUpdate, onRemove, compact = false }: 
           placeholder="Module title..."
           className={cn(
             'flex-1 px-2 py-1 border border-gray-300 rounded text-sm font-medium focus:outline-none focus:ring-2',
-            compact ? 'focus:ring-purple-500' : 'focus:ring-indigo-500'
+            compact ? 'focus:ring-purple-500' : 'focus:ring-indigo-500',
+            'min-w-0'
           )}
         />
 
-        {module.wrapper_id && (
-          <div className="flex items-center space-x-1 px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">
-            <Code className="w-3 h-3" />
-            <span>{selectedWrapper?.label || 'Wrapper'}</span>
+        {/* Wrapper Badges */}
+        <div className="flex items-center gap-1 overflow-x-auto max-w-[200px]">
+          {wrappers.map((wrapper) => (
+            <Badge 
+              key={wrapper} 
+              variant="secondary" 
+              className="flex items-center gap-1 bg-blue-100 text-blue-700 hover:bg-blue-200"
+            >
+              <span className="truncate max-w-[80px]">{getWrapperLabel(wrapper)}</span>
+              <button 
+                onClick={() => handleRemoveWrapper(wrapper)}
+                className="text-blue-700 hover:text-blue-900"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </Badge>
+          ))}
           </div>
-        )}
 
         <button
           onClick={() => setShowWrapper(!showWrapper)}
@@ -130,25 +178,70 @@ export function ModuleComposer({ module, onUpdate, onRemove, compact = false }: 
         {/* Wrapper Configuration */}
         {showWrapper && (
           <div className="border-t border-gray-200 pt-3">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Processing Wrapper
-            </label>
-            <select
-              value={module.wrapper_id || ''}
-              onChange={(e) => onUpdate({ wrapper_id: e.target.value || undefined })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              {wrapperTypes.map((wrapper) => (
-                <option key={wrapper.value} value={wrapper.value}>
-                  {wrapper.label}
-                </option>
-              ))}
-            </select>
-            {selectedWrapper && selectedWrapper.value && (
-              <p className="text-xs text-gray-600 mt-1">
-                {selectedWrapper.description}
-              </p>
-            )}
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Add Processing Wrapper
+                </label>
+                <div className="flex gap-2">
+                  <select
+                    value={selectedWrapper}
+                    onChange={(e) => setSelectedWrapper(e.target.value)}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Select a wrapper...</option>
+                    {wrapperTypes.map((wrapper) => (
+                      <option key={wrapper.value} value={wrapper.value}>
+                        {wrapper.label}
+                      </option>
+                    ))}
+                  </select>
+                  <Button 
+                    onClick={handleAddWrapper}
+                    disabled={!selectedWrapper || selectedWrapper === 'no_wrapper'}
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </div>
+                {selectedWrapper && (
+                  <p className="text-xs text-gray-600 mt-1">
+                    {wrapperTypes.find(w => w.value === selectedWrapper)?.description}
+                  </p>
+                )}
+              </div>
+              
+              {wrappers.length > 0 && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Applied Wrappers
+                  </label>
+                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex flex-wrap gap-2">
+                      {wrappers.map((wrapper) => (
+                        <Badge 
+                          key={wrapper} 
+                          variant="secondary" 
+                          className="flex items-center gap-1 bg-blue-100 text-blue-700"
+                        >
+                          <Code className="w-3 h-3" />
+                          <span>{getWrapperLabel(wrapper)}</span>
+                          <button 
+                            onClick={() => handleRemoveWrapper(wrapper)}
+                            className="text-blue-700 hover:text-blue-900"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </Badge>
+                      ))}
+                    </div>
+                    <p className="text-xs text-gray-600 mt-2">
+                      Wrappers are applied in the order listed above. Drag to reorder (coming soon).
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
