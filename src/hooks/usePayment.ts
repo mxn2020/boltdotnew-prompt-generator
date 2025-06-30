@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { createStripeCheckoutSession, createStripePortalSession, getPriceIdForPlan } from '../lib/stripe-checkout';
 import type { 
   UserSubscription, 
   UserCredits, 
@@ -278,5 +279,41 @@ export function useAddCredits() {
       queryClient.invalidateQueries({ queryKey: ['subscription-info'] });
       queryClient.invalidateQueries({ queryKey: ['credit-transactions'] });
     },
+  });
+}
+
+export function useCreateCheckoutSession() {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationFn: async ({ planType, billingCycle }: { planType: 'pro' | 'max'; billingCycle: 'monthly' | 'yearly' }) => {
+      if (!user) throw new Error('User not authenticated');
+      
+      const priceId = getPriceIdForPlan(planType, billingCycle);
+      
+      // Get existing customer ID if available
+      const { data: subscription } = await supabase
+        .from('user_subscriptions')
+        .select('stripe_customer_id')
+        .eq('user_id', user.id)
+        .single();
+
+      await createStripeCheckoutSession({
+        priceId,
+        customerId: subscription?.stripe_customer_id
+      });
+    },
+    onSuccess: () => {
+      // Invalidate subscription queries when checkout is successful
+      queryClient.invalidateQueries({ queryKey: ['subscription'] });
+      queryClient.invalidateQueries({ queryKey: ['subscription-info'] });
+    },
+  });
+}
+
+export function useCreatePortalSession() {
+  return useMutation({
+    mutationFn: createStripePortalSession,
   });
 }

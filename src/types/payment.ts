@@ -124,7 +124,7 @@ export const PLAN_FEATURES: Record<string, PlanFeatures> = {
   },
   pro: {
     name: 'Pro',
-    price: 19,
+    price: 9,
     credits: 1000,
     features: [
       'Everything in Free',
@@ -138,15 +138,14 @@ export const PLAN_FEATURES: Record<string, PlanFeatures> = {
   },
   max: {
     name: 'Max',
-    price: 49,
-    credits: 3000,
+    price: 29,
+    credits: 5000,
     features: [
       'Everything in Pro',
-      'Unlimited AI generation',
       'Team collaboration',
       'Advanced analytics',
       'Custom integrations',
-      '3,000 AI credits/month'
+      '5,000 AI credits/month'
     ]
   }
 };
@@ -190,9 +189,9 @@ export const AI_FEATURE_CONFIGS: Record<string, AIFeatureConfig> = {
 
 export const STRIPE_CONFIG = {
   PRICE_IDS: {
-    pro_monthly: 'price_pro_monthly',
-    pro_yearly: 'price_pro_yearly',
-    max_monthly: 'price_max_monthly',
-    max_yearly: 'price_max_yearly'
+    pro_monthly: import.meta.env.VITE_STRIPE_PRO_MONTHLY_PRICE_ID,
+    pro_yearly: import.meta.env.VITE_STRIPE_PRO_YEARLY_PRICE_ID,
+    max_monthly: import.meta.env.VITE_STRIPE_MAX_MONTHLY_PRICE_ID,
+    max_yearly: import.meta.env.VITE_STRIPE_MAX_YEARLY_PRICE_ID
   }
 };

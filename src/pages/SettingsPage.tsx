@@ -45,7 +45,7 @@ import { Separator } from "@/components/ui/separator";
 export function SettingsPage() {
   const [searchParams] = useSearchParams();
   const defaultTab = searchParams.get('tab') || 'general';
-  const [activeSection, setActiveSection] = React.useState<'general' | 'notifications' | 'privacy' | 'api-keys' | 'billing' | 'account'>(defaultTab as any);
+  const [activeSection, setActiveSection] = React.useState<'general' | 'notifications' | 'privacy' | 'billing' | 'account'>(defaultTab as any);
 
   const { data: preferences } = useUserPreferences();
   const updatePreferences = useUpdatePreferences();
@@ -65,7 +65,6 @@ export function SettingsPage() {
     { id: 'general', label: 'General', icon: Settings },
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'privacy', label: 'Privacy', icon: Shield },
-    { id: 'api-keys', label: 'API Keys', icon: Key },
     { id: 'billing', label: 'Billing & Plans', icon: CreditCard },
     { id: 'account', label: 'Account', icon: User },
   ];
@@ -125,16 +124,6 @@ export function SettingsPage() {
                 preferences={preferences}
                 onUpdate={handleUpdatePreferences}
                 isLoading={updatePreferences.isPending}
-              />
-            )}
-
-            {activeSection === 'api-keys' && (
-              <APIKeysSettings
-                apiKeys={apiKeys || []}
-                onCreateKey={createAPIKey.mutateAsync}
-                onDeleteKey={deleteAPIKey.mutateAsync}
-                isCreating={createAPIKey.isPending}
-                isDeleting={deleteAPIKey.isPending}
               />
             )}
 

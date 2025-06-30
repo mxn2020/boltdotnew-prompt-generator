@@ -2,6 +2,7 @@ import React from 'react';
 import { Check, Sparkles, Zap, Crown } from 'lucide-react';
 import { PLAN_FEATURES } from '../../types/payment';
 import { cn } from '../../lib/utils';
+import { useCreateCheckoutSession } from '../../hooks/usePayment';
 
 interface PricingPlansProps {
   selectedPlan?: string;
@@ -11,13 +12,17 @@ interface PricingPlansProps {
 
 export function PricingPlans({ selectedPlan, onSelectPlan, showOnboarding = false }: PricingPlansProps) {
   const [billingCycle, setBillingCycle] = React.useState<'monthly' | 'yearly'>('monthly');
+  const createCheckoutSession = useCreateCheckoutSession();
 
   const handleSelectPlan = (planId: string) => {
     if (onSelectPlan) {
       onSelectPlan(planId);
-    } else {
+    } else if (planId !== 'free') {
       // Handle Stripe checkout
-      console.log('Redirect to Stripe checkout for plan:', planId);
+      createCheckoutSession.mutate({
+        planType: planId as 'pro' | 'max',
+        billingCycle
+      });
     }
   };
 
