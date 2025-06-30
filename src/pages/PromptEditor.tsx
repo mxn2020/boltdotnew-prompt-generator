@@ -260,7 +260,7 @@ export function PromptEditor() {
       category: 'general',
       type: 'asset',
       language: 'english',
-      complexity: 'simple',
+      complexity: 'custom',
       is_public: false,
       tags: [],
       version_major: 1,
