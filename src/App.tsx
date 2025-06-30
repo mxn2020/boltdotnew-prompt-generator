@@ -13,6 +13,8 @@ import { PromptStudio } from './pages/PromptStudio';
 import { PromptExplorer } from './pages/PromptExplorer';
 import { ComponentLibraryPage } from './pages/ComponentLibraryPage';
 import { CommunityPage } from './pages/CommunityPage';
+import { ProfilePage } from './pages/ProfilePage';
+import { SettingsPage } from './pages/SettingsPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -89,18 +91,12 @@ function App() {
             } />
             <Route path="/profile" element={
               <ProtectedRoute>
-                <div className="p-8 text-center">
-                  <h1 className="text-2xl font-bold">Profile</h1>
-                  <p className="text-gray-600 mt-2">Coming in Step 6</p>
-                </div>
+                <ProfilePage />
               </ProtectedRoute>
             } />
             
             {/* Catch all route */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </Router>
-      </AuthProvider>
+                <SettingsPage />
     </QueryClientProvider>
   );
 }
